@@ -1,0 +1,2220 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "45ccfcfa-97ea-4cb3-a011-283cd53b862f",
+              "name": "newTaskId",
+              "value": "={{$json.gid}}",
+              "type": "string"
+            },
+            {
+              "id": "f45b8e16-8794-46da-af04-876a7e03a08c",
+              "name": "sectionId",
+              "value": "={{$json.memberships[0].section.gid}}",
+              "type": "string"
+            },
+            {
+              "id": "f3fef66f-b23a-4e36-8997-18e4505ed6f4",
+              "name": "projectId",
+              "value": "={{$json.memberships[0].project.gid}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        640,
+        128
+      ],
+      "id": "e32ccf2b-abfb-4536-ab15-7594ba6d1942",
+      "name": "Set | Normalize Task Context"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "9365af03-0b29-4d38-a357-733f67f5ccff",
+              "leftValue": "={{ $json.gid }}",
+              "rightValue": "={{ $('Set | Normalize Task Context').item.json.newTaskId }}\n",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1024,
+        128
+      ],
+      "id": "525248d4-2f8a-4580-a3ab-8fdf3bf923c4",
+      "name": "IF | Is Not Template Task"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Você é um agente de extração de dados estruturados a partir de tarefas do Asana.\nDetalhes do projeto:\n{{ $('Asana | Get New Task Details1').item.json.notes }}\nVocê receberá:\n- O nome do projeto (memberships[0].project.name)\n- O nome da coluna/seção (memberships[0].section.name)\n- O título da tarefa (name)\n- A descrição completa da tarefa (notes), em formato de formulário textual\n\nSua tarefa é:\n1. Ler cuidadosamente a descrição (notes).\n2. Extrair apenas informações explícitas.\n3. Retornar EXCLUSIVAMENTE um JSON válido.\n4. Nunca inventar ou inferir informações.\n5. Quando um dado não existir ou não estiver claramente identificado, retornar string vazia \"\".\n6. Não retornar null, apenas \"\".\n\nDADOS DE CONTEXTO (não inferir além disso):\nProjeto:\n{{ $('Asana | Get New Task Details1').item.json.memberships[0].project.name }}\n\nColuna:\n{{ $('Asana | Get New Task Details1').item.json.memberships[0].section.name }}\n\nTítulo do Evento:\n{{ $('Asana | Get New Task Details1').item.json.name }}\n\nDescrição do card:\n{{ $('Asana | Get New Task Details1').item.json.notes }}\n\n--------------------------------------------------\nREGRAS CRÍTICAS DE INTERPRETAÇÃO (OBRIGATÓRIO)\n--------------------------------------------------\n\n1. BLOCO DO CLIENTE ATENDIDO:\n   - O cliente é SEMPRE o bloco inicial do formulário.\n   - Considerar como cliente os campos:\n     \"Empresa:\", \"CNPJ:\", \"Nome:\", \"CPF:\", \"Responsável pela contratação:\".\n   - \"nome_cliente_atendido\":\n       • Deve receber o valor do campo \"Empresa:\".\n       • Nunca utilizar nomes de pessoas físicas.\n       • Nunca utilizar dados do bloco de consultor.\n   - \"cnpj_cliente\":\n       • Deve receber exclusivamente o valor do campo \"CNPJ:\".\n\n2. BLOCO DO CONSULTOR:\n   - O consultor é identificado EXCLUSIVAMENTE pelos campos:\n     \"Consultor:\" e \"Empresa e CNPJ:\".\n   - \"nome_consultor\":\n       • Deve conter APENAS o nome da pessoa indicado em \"Consultor:\".\n       • Nunca utilizar \"Empresa\", \"Nome\" ou \"Responsável\" do bloco do cliente.\n       • Nunca utilizar razão social ou CNPJ.\n   - Se o campo \"Consultor:\" estiver vazio ou ausente, retornar \"\".\n\n3. SEPARAÇÃO ABSOLUTA DE PAPÉIS:\n   - Cliente e consultor NUNCA podem ser a mesma entidade.\n   - Em caso de qualquer ambiguidade, retornar \"\" no campo duvidoso.\n\n4. PROIBIÇÕES EXPLÍCITAS:\n   - Não usar texto do campo \"Objeto da contratação\" para identificar nomes.\n   - Não deduzir nomes a partir do contexto do texto descritivo.\n   - Não combinar dados de blocos diferentes.\n\n5. VALORES E HORAS:\n   - \"horas_consultoria\": extrair de \"Carga horária\".\n   - \"valor_pago_cliente\": extrair do campo \"Valor:\".\n   - \"valor_pago_consultor\": somente se houver valor explícito associado ao consultor; caso contrário \"\".\n   - Parcelas só devem ser preenchidas se houver indicação clara de pagamento parcelado.\n\n--------------------------------------------------\nRETORNE EXATAMENTE ESTE JSON\n(não alterar nomes das chaves)\n--------------------------------------------------\n\n{\n  \"nome_projeto\": \"\",\n  \"coluna\": \"\",\n  \"titulo_evento\": \"\",\n  \"horas_consultoria\": \"\",\n  \"numero_ll\": \"\",\n  \"numero_contrato\": \"\",\n  \"nome_consultor\": \"\",\n  \"valor_pago_consultor\": \"\",\n  \"parcelas_pagas\": \"\",\n  \"parcelas_consultor\": \"\",\n  \"nome_cliente_atendido\": \"\",\n  \"cnpj_cliente\": \"\",\n  \"data_inicio\": \"\",\n  \"data_termino\": \"\",\n  \"valor_pago_cliente\": \"\"\n}\n\nREGRAS FINAIS:\n- \"nome_projeto\" deve vir exclusivamente do nome do projeto.\n- \"coluna\" deve vir exclusivamente do nome da coluna.\n- \"titulo_evento\" deve vir exclusivamente do título da tarefa.\n- Use apenas informações explícitas da descrição.\n- Campos não encontrados ou ambíguos devem ser \"\".\n- Não explique nada.\n- Não escreva absolutamente nada fora do JSON.\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        1264,
+        416
+      ],
+      "id": "0b1e7fb0-2726-4abe-a871-e7c1c689df67",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1264,
+        544
+      ],
+      "id": "9d3741b2-44cb-4c82-b9d3-ee83acbb28ca",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "id": "={{ $json.resource.gid }}"
+      },
+      "type": "n8n-nodes-base.asana",
+      "typeVersion": 1,
+      "position": [
+        896,
+        416
+      ],
+      "id": "64404f93-71cc-4557-a19f-3ef87f865537",
+      "name": "Asana | Get New Task Details1",
+      "credentials": {
+        "asanaApi": {
+          "id": "",
+          "name": "Asana account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Texto retornado pelo AI Agent\nlet raw = $json.output;\n\n// 2. Remove ```json e ```\nraw = raw.replace(/```json|```/g, '').trim();\n\n// 3. Parse do JSON da IA\nlet data;\ntry {\n  data = JSON.parse(raw);\n} catch (e) {\n  throw new Error('JSON inválido retornado pela IA');\n}\n\n// 4. ID da task vindo DIRETO do Asana (fonte confiável)\nconst asanaTaskId = $node[\"Asana | Get New Task Details1\"].json.gid || \"\";\n\n// 5. Retorno final para a planilha\nreturn [\n  {\n    json: {\n      asana_task_id: asanaTaskId,\n\n      nome_projeto: data.nome_projeto || \"\",\n      coluna: data.coluna || \"\",\n      titulo_evento: data.titulo_evento || \"\",\n      horas_consultoria: data.horas_consultoria || \"\",\n      numero_ll: data.numero_ll || \"\",\n      numero_contrato: data.numero_contrato || \"\",\n      nome_consultor: data.nome_consultor || \"\",\n      valor_pago_consultor: data.valor_pago_consultor || \"\",\n      parcelas_pagas: data.parcelas_pagas || \"\",\n      parcelas_consultor: data.parcelas_consultor || \"\",\n      nome_cliente_atendido: data.nome_cliente_atendido || \"\",\n      cnpj_cliente: data.cnpj_cliente || \"\",\n      data_inicio: data.data_inicio || \"\",\n      data_termino: data.data_termino || \"\",\n      valor_pago_cliente: data.valor_pago_cliente || \"\"\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1552,
+        416
+      ],
+      "id": "76a4a37a-ee35-48e5-87c9-db73b2afc2a0",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "16f21f3d-38ca-47d3-ab48-80caac51c08d",
+              "leftValue": "={{ $json.change.field }}",
+              "rightValue": "notes",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        496,
+        432
+      ],
+      "id": "6107ec6b-aadb-4bc3-a9a8-b13511c8d1ec",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ad7d6934-178f-45b6-aa1f-491702a721a5",
+              "leftValue": "={{ $json.action }}",
+              "rightValue": "added",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "25e3ac69-308b-4194-899a-00d6f27a5881",
+              "leftValue": "={{ $json.parent.resource_type }}",
+              "rightValue": "project",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        288,
+        144
+      ],
+      "id": "9972776b-1ff4-4073-9c51-6e3be9bbbcc5",
+      "name": "IF | Is Task Added to Section"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "id": "={{ $json.parent.gid }}"
+      },
+      "type": "n8n-nodes-base.asana",
+      "typeVersion": 1,
+      "position": [
+        1184,
+        752
+      ],
+      "id": "c4410dae-6eba-4981-b578-4d5a9de8acc7",
+      "name": "Asana | Get New Task Details2",
+      "credentials": {
+        "asanaApi": {
+          "id": "",
+          "name": "Asana account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Fluxo 1 — Criação de Tarefa (Asana)\n\nDetecta quando uma tarefa é criada em uma seção, valida se não é template, normaliza os dados e atualiza a tarefa automaticamente.",
+        "height": 352,
+        "width": 3408,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        80,
+        -16
+      ],
+      "id": "ed2255dc-5a2c-44d8-a4a9-e0af4302bb64",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "Fluxo 2 — Extração de Dados e Planilha\n\nLê a descrição do card, usa IA para extrair informações estruturadas e salva tudo automaticamente em uma planilha do Google.",
+        "height": 320,
+        "width": 1856,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        80,
+        352
+      ],
+      "id": "dc8ac745-df0a-4a3d-98eb-9be6218a64cd",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "Fluxo 3 — Comentários e Registro Formal\n\nCaptura novos comentários, transforma o texto em registro institucional padronizado e envia para o canal de comunicação definido.",
+        "height": 416,
+        "width": 3056,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        80,
+        688
+      ],
+      "id": "35f9c2d1-e300-4691-b41c-e2245536ba0f",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "resource": "=1212349740930058",
+        "workspace": "ASANA_GID"
+      },
+      "type": "n8n-nodes-base.asanaTrigger",
+      "typeVersion": 1,
+      "position": [
+        128,
+        208
+      ],
+      "id": "43734f03-bfd3-48ec-9b27-4e10b097f306",
+      "name": "PROJETO A - 2026",
+      "webhookId": "f294f714-f006-459a-b110-fb75ec81f7c1",
+      "credentials": {
+        "asanaApi": {
+          "id": "",
+          "name": "Asana account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "=1212201203344687",
+        "workspace": "ASANA_GID"
+      },
+      "type": "n8n-nodes-base.asanaTrigger",
+      "typeVersion": 1,
+      "position": [
+        128,
+        80
+      ],
+      "id": "040b1709-3a21-443b-89ff-1a83dd778ddf",
+      "name": "ATENDIMENTO UNIDADE B - 2026",
+      "webhookId": "277bd47c-b9c1-4462-9e3d-20944e24c6b4",
+      "credentials": {
+        "asanaApi": {
+          "id": "",
+          "name": "Asana account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bd7663a4-430b-4074-9235-6d32a30dd3db",
+              "name": "asana_task_id",
+              "value": "={{ $json.gid }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1104,
+        416
+      ],
+      "id": "5aa63e98-f8a9-4b23-9aa2-a31eec0f9cbf",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "SEU_ID",
+          "mode": "list",
+          "cachedResultName": "Cliente"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Página1"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Nome do projeto": "={{ $json.nome_projeto }}",
+            "Coluna": "={{ $json.coluna }}",
+            "Título do Evento": "={{ $json.titulo_evento }}",
+            "Horas de consultoria": "={{ $json.horas_consultoria }}",
+            "Nº LL": "={{ $json.numero_ll }}",
+            "Nº do contrato": "={{ $json.numero_contrato }}",
+            "Nome do consultor": "={{ $json.nome_consultor }}",
+            "Valor pago o consultor": "={{ $json.valor_pago_consultor }}",
+            "Parcelas Pagas": "={{ $json.parcelas_pagas }}",
+            "Parcelas do consultor": "={{ $json.parcelas_consultor }}",
+            "Nome do cliente atendido": "={{ $json.nome_cliente_atendido }}",
+            "CNPJ do Cliente": "={{ $json.cnpj_cliente }}",
+            "Data de inicio": "={{ $json.data_inicio }}",
+            "Data de termino": "={{ $json.data_termino }}",
+            "Valor pago pelo cliente": "={{ $json.valor_pago_cliente }}",
+            "Asana Task ID": "={{ $json.asana_task_id }}"
+          },
+          "matchingColumns": [
+            "Asana Task ID"
+          ],
+          "schema": [
+            {
+              "id": "Asana Task ID",
+              "displayName": "Asana Task ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Nome do projeto",
+              "displayName": "Nome do projeto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Coluna",
+              "displayName": "Coluna",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Título do Evento",
+              "displayName": "Título do Evento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Horas de consultoria",
+              "displayName": "Horas de consultoria",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Nº LL",
+              "displayName": "Nº LL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Nº do contrato",
+              "displayName": "Nº do contrato",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Nome do consultor",
+              "displayName": "Nome do consultor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Valor pago o consultor",
+              "displayName": "Valor pago o consultor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Parcelas Pagas",
+              "displayName": "Parcelas Pagas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Parcelas do consultor",
+              "displayName": "Parcelas do consultor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Nome do cliente atendido",
+              "displayName": "Nome do cliente atendido",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CNPJ do Cliente",
+              "displayName": "CNPJ do Cliente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Data de inicio",
+              "displayName": "Data de inicio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Data de termino",
+              "displayName": "Data de termino",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Valor pago pelo cliente",
+              "displayName": "Valor pago pelo cliente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "output",
+              "displayName": "output",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1712,
+        416
+      ],
+      "id": "6bc59533-03f8-44ed-ad30-78699323de77",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://app.asana.com/api/1.0/tasks/{{ $('subtask_Base').item.json.gid }}/stories",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json"
+            },
+            {
+              "name": "authorization",
+              "value": "=Bearer {{ $env.ASANA_TOKEN }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2336,
+        96
+      ],
+      "id": "232022e8-bb74-49c9-be44-f7eec55ed14c",
+      "name": "Buscas_Comentarios"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5c28fe1a-377a-4636-b5e4-2a5f1e8b0c52",
+              "name": "gid",
+              "value": "={{ $json.gid }}",
+              "type": "string"
+            },
+            {
+              "id": "89164e9f-e9b0-4ae2-95c7-ce3433ebf9d9",
+              "name": "name",
+              "value": "={{ $json.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1552,
+        80
+      ],
+      "id": "5fe579bb-9dcb-434a-a717-184da6b9f8cf",
+      "name": "subtask_Base"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1856,
+        80
+      ],
+      "id": "7efae4b1-634f-4c26-8d80-35326239eafd",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "name": "Replace Me",
+      "typeVersion": 1,
+      "position": [
+        3360,
+        96
+      ],
+      "id": "6f0597a7-8a8c-4a94-bd9c-0de677931f81"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "id": "={{ $json.resource.gid }}"
+      },
+      "type": "n8n-nodes-base.asana",
+      "typeVersion": 1,
+      "position": [
+        464,
+        128
+      ],
+      "id": "09b4f3a9-24bd-40b7-885c-6e32342925bc",
+      "name": "Buscar_Novo_Cartao",
+      "credentials": {
+        "asanaApi": {
+          "id": "",
+          "name": "Asana account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 1,
+        "filters": {
+          "section": "={{ $json.sectionId }}"
+        }
+      },
+      "type": "n8n-nodes-base.asana",
+      "typeVersion": 1,
+      "position": [
+        800,
+        128
+      ],
+      "id": "780f5d40-490c-4a38-942d-4ef93217efbb",
+      "name": "Buscar Coluna Novo Cartao",
+      "credentials": {
+        "asanaApi": {
+          "id": "",
+          "name": "Asana account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "id": "={{ $json.gid }}"
+      },
+      "type": "n8n-nodes-base.asana",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        80
+      ],
+      "id": "632465ef-bc54-45cd-bcbf-0314c5191d6b",
+      "name": "Buscar Detalhes cartão Base",
+      "credentials": {
+        "asanaApi": {
+          "id": "",
+          "name": "Asana account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "subtask",
+        "operation": "getAll",
+        "taskId": "={{ $json.gid }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.asana",
+      "typeVersion": 1,
+      "position": [
+        1408,
+        80
+      ],
+      "id": "5e14203b-54ff-4d1e-afbb-9f084b255364",
+      "name": "Buscar subtasks base",
+      "credentials": {
+        "asanaApi": {
+          "id": "",
+          "name": "Asana account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "id": "={{ $('Set | Normalize Task Context').item.json.newTaskId }}",
+        "otherProperties": {
+          "notes": "={{ $('Buscar Detalhes cartão Base').item.json.notes }}"
+        }
+      },
+      "type": "n8n-nodes-base.asana",
+      "typeVersion": 1,
+      "position": [
+        1696,
+        80
+      ],
+      "id": "6e3a2904-7cf8-47a4-9c1d-01ef5b32a456",
+      "name": "Atualizar novo cartao",
+      "credentials": {
+        "asanaApi": {
+          "id": "",
+          "name": "Asana account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://app.asana.com/api/1.0/tasks/{{ $('subtask_Base').item.json.gid }}?opt_fields=gid,name,num_comments,notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.ASANA_TOKEN }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2160,
+        96
+      ],
+      "id": "d63f204c-c10d-4dfe-8538-26b95f240af1",
+      "name": "HTTP | Encontrar descrição da subtarefa"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => ({\n  json: {\n    baseSubtaskGid: item.json.gid,      // da subtarefa base\n    baseSubtaskName: item.json.name,\n    newSubtaskGid: item.json.new_gid    // da subtarefa criada\n  }\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2016,
+        96
+      ],
+      "id": "a01fee00-6026-45fd-aebe-22624688ba43",
+      "name": "Code3"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "435aead3-7dc3-49a8-8c26-70c2887c2082",
+              "leftValue": "={{ $json.hasComment }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2752,
+        96
+      ],
+      "id": "84425d18-4889-4eba-8569-b45ab3528856",
+      "name": "If | Verificar se existe comentário"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bbc8e3c2-363f-4fa7-a589-6dac0b3b2543",
+              "name": "descricao_subtarefa",
+              "value": "=#wpp\n\n{{ $('HTTP | Encontrar descrição da subtarefa').item.json.data.notes }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2944,
+        16
+      ],
+      "id": "ca90e5c8-ecef-4b7e-a040-81d6b2ed920e",
+      "name": "Set | Com #wpp"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6b5bf883-2c52-42ed-b32f-b6c2de033ec4",
+              "name": "descricao_subtarefa",
+              "value": "={{ $('HTTP | Encontrar descrição da subtarefa').item.json.data.notes }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2944,
+        192
+      ],
+      "id": "55e70960-11ef-4024-bb63-b702bc9525f6",
+      "name": "Set | Sem o #wpp"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const stories = Array.isArray(item.json.data) ? item.json.data : [];\n\n  // Verifica se existe pelo menos um comentário válido\n  const hasComment = stories.some(story =>\n    story.resource_subtype === 'comment_added' &&\n    typeof story.text === 'string' &&\n    story.text.trim() !== ''\n  );\n\n  // Descrição original da subtarefa\n  const notesOriginal =\n    item.json.notes && typeof item.json.notes === 'string'\n      ? item.json.notes.trim()\n      : '';\n\n  // Monta descrição final\n  let descricaoFinal = '';\n\n  if (hasComment) {\n    descricaoFinal = '#wpp';\n    if (notesOriginal !== '') {\n      descricaoFinal += '\\n\\n' + notesOriginal;\n    }\n  } else {\n    descricaoFinal = notesOriginal;\n  }\n\n  return {\n    json: {\n      ...item.json,\n      hasComment,\n      descricao_subtarefa: descricaoFinal\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2544,
+        96
+      ],
+      "id": "41cc59ac-afe9-4853-8f7e-86f8613a08b1",
+      "name": "Code4"
+    },
+    {
+      "parameters": {
+        "resource": "subtask",
+        "taskId": "={{ $('Set | Normalize Task Context').item.json.newTaskId }}",
+        "name": "={{ $('subtask_Base').item.json.name }}",
+        "otherProperties": {
+          "notes": "={{ $json.descricao_subtarefa }}"
+        }
+      },
+      "type": "n8n-nodes-base.asana",
+      "typeVersion": 1,
+      "position": [
+        3184,
+        96
+      ],
+      "id": "7758c83c-0949-4d51-9ed5-31b6a4409a1b",
+      "name": "Asana | Adicionar subtarefas no card novo1",
+      "executeOnce": true,
+      "credentials": {
+        "asanaApi": {
+          "id": "",
+          "name": "Asana account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d42648f2-5024-47fa-81b3-559de36a811c",
+              "leftValue": "={{ $json.resource.resource_subtype }}",
+              "rightValue": "=comment_added",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "e51149b3-6c84-4d29-b2e0-f2bf992e1457",
+              "leftValue": "={{ $json.resource.resource_subtype }}",
+              "rightValue": "comment_added",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        688,
+        784
+      ],
+      "id": "b8006be1-f116-4368-b48c-151bf8bbc58e",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "url": "=https://app.asana.com/api/1.0/tasks/{{ $('Edit Fields').item.json.Id_Subtarefa }}?opt_fields=gid,name,num_comments,notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.ASANA_TOKEN }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1984,
+        752
+      ],
+      "id": "c5dbc933-b1f0-4f59-84a2-17a8e5519f47",
+      "name": "HTTP | Encontrar subtarefa"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "id": "={{ $('Asana | Get New Task Details2').item.json.parent.gid }}"
+      },
+      "type": "n8n-nodes-base.asana",
+      "typeVersion": 1,
+      "position": [
+        1504,
+        752
+      ],
+      "id": "44b3aaab-5a51-4063-b91b-cc57485d6971",
+      "name": "Get a task",
+      "credentials": {
+        "asanaApi": {
+          "id": "",
+          "name": "Asana account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6a6899db-c214-42f8-9905-9a405842dc1e",
+              "name": "Id_Subtarefa",
+              "value": "={{ $json.gid }}",
+              "type": "string"
+            },
+            {
+              "id": "2166696f-fdad-43a6-b986-a66a1eb2984e",
+              "name": "Link_Subtarefa",
+              "value": "={{ $json.permalink_url }}",
+              "type": "string"
+            },
+            {
+              "id": "6e6b0d0e-5139-4c8b-8e18-b1d64bded927",
+              "name": "subtarefa",
+              "value": "={{ $json.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1344,
+        752
+      ],
+      "id": "57b6abe1-4ebc-4afc-a59c-03d56d179c80",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f008ea32-f7ff-4e5e-8e3b-4cd2a8f395ee",
+              "name": "Nome_Projeto",
+              "value": "={{ $json.projects[0].name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1664,
+        752
+      ],
+      "id": "47455fa4-f8ac-4012-ad3b-5e9877abd62b",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/n8n",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "=5500000000000"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.mensagem }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "deef36b3-947a-416b-a901-82ab0b4f0f12",
+      "name": "(EVO) Enviar Mensagem1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2832,
+        704
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "evo_Api"
+        }
+      },
+      "notes": "TEMPLATE DESENVOLVIDO POR NOCODE STARTUP\nhttps://nocodestartup.io/\n\nFORMAÇÃO GESTOR DE AGENTES DE IA:\nhttps://nocodestartup.io/formacao-gestor-agentes-ia/"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7b86abf8-c7c5-4bfb-9a87-7178da09ec3a",
+              "name": "mensagem",
+              "value": "={{ $json.mensagem }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2672,
+        704
+      ],
+      "id": "fe315d8d-66e5-4f1f-8ff8-5dbd7d690088",
+      "name": "Edit Fields3"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3ce0b5ec-af9e-441a-85de-92f6aca030d6",
+              "leftValue": "={{ $json['Descrição_Sub'] }}",
+              "rightValue": "#wpp",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2320,
+        752
+      ],
+      "id": "607fc86b-b693-4ca3-bd1e-9b65132f761e",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "url": "=https://app.asana.com/api/1.0/tasks/{{ $('Edit Fields').item.json.Id_Subtarefa }}/stories",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json"
+            },
+            {
+              "name": "authorization",
+              "value": "=Bearer {{ $env.ASANA_TOKEN }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1808,
+        752
+      ],
+      "id": "b109fada-1cc9-4653-bf7d-6f0410840d9c",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ebc42305-68de-46b6-8867-ecbe70e4a282",
+              "name": "Descrição_Sub",
+              "value": "={{ $json.data.notes }}",
+              "type": "string"
+            },
+            {
+              "id": "dd0cd4be-b2d7-4a6d-a410-94f7f8c626d9",
+              "name": "Comentario_Sub",
+              "value": "={{ $('HTTP Request').item.json.data[1].text }}",
+              "type": "string"
+            },
+            {
+              "id": "7a4800f7-d72a-49c0-aa45-5ba25e07e881",
+              "name": "Nome_Comentario",
+              "value": "={{ $('HTTP Request').item.json.data[0].created_by.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2128,
+        752
+      ],
+      "id": "a36269ff-fbc7-4371-9366-15eb7f3b2d0b",
+      "name": "Edit Fields4"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ===== DADOS DOS NÓS ANTERIORES =====\nconst nomeProjeto = $('Edit Fields2').item.json.Nome_Projeto;\nconst nomeCard = $('Get a task').item.json.name;\nconst nomeSubtarefa = $('Edit Fields').item.json.subtarefa;\nconst linkSubtarefa = $('Edit Fields').item.json.Link_Subtarefa;\n\n// Nome da pessoa que criou o comentário (Edit Fields4)\nconst nomePessoaComentario =\n  $('Edit Fields4').item.json.Nome_Comentario || 'Alguém';\n\n// Texto do comentário (Edit Fields4)\nconst textoComentario =\n  $('Edit Fields4').item.json.Comentario_Sub || 'Comentário adicionado';\n\n\n// ===== MENSAGEM FINAL (FORMATO EXATO) =====\nconst mensagem =\n`🔔 Atualização de subtarefa realizada!\n\nNome do projeto: ${nomeProjeto}\nNome do card: ${nomeCard}\nNome da subtarefa: ${nomeSubtarefa}\n\nAtualização realizada: ${nomePessoaComentario} adicionou um comentário, deixando a mensagem: \"${textoComentario}\".\n\n🔗 Link: ${linkSubtarefa}`;\n\n\n// ===== RETORNO =====\nreturn [\n  {\n    json: {\n      mensagem\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2512,
+        704
+      ],
+      "id": "a727b6ee-2107-4538-82d0-da62e0913154",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ordena pelos eventos mais recentes\nitems.sort((a, b) => {\n  return new Date(b.json.created_at) - new Date(a.json.created_at);\n});\n\n// Retorna apenas o mais recente\nreturn [\n  {\n    json: items[0].json\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        688,
+        416
+      ],
+      "id": "0e6fea2d-da05-4b99-83b8-21ed23d5fc6c",
+      "name": "Code2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ordena os items pelo created_at (mais recente primeiro)\nitems.sort((a, b) => {\n  return new Date(b.json.created_at) - new Date(a.json.created_at);\n});\n\n// Retorna APENAS o item mais recente\nreturn [\n  {\n    json: items[0].json\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1008,
+        752
+      ],
+      "id": "2d401ab3-3061-4112-8614-e54a3c7fb263",
+      "name": "Code5"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b853da3f-024f-4e9c-bfc2-6f480399e4cd",
+              "leftValue": "={{ $json.change.field }}",
+              "rightValue": "completed",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        928
+      ],
+      "id": "411b6b7f-67ee-4a2b-bb84-a7dbe9278a81",
+      "name": "If3"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ordena os eventos pelo created_at (mais recente primeiro)\nitems.sort((a, b) => {\n  return new Date(b.json.created_at) - new Date(a.json.created_at);\n});\n\n// Retorna APENAS o evento mais recente\nreturn [\n  {\n    json: items[0].json\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        912
+      ],
+      "id": "2d7614b8-813f-477a-a38a-99672b594b6d",
+      "name": "Code6"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "id": "={{ $json.resource.gid }}"
+      },
+      "type": "n8n-nodes-base.asana",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        912
+      ],
+      "id": "9b49c720-9bb1-4017-a2d0-2fc9cf81fcdb",
+      "name": "Asana | Get New Task Details",
+      "credentials": {
+        "asanaApi": {
+          "id": "",
+          "name": "Asana account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://app.asana.com/api/1.0/tasks/{{ $('Edit Fields5').item.json.Id_Subtarefa }}?opt_fields=gid,name,num_comments,notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.ASANA_TOKEN }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2080,
+        912
+      ],
+      "id": "ab285f69-ff3e-45a1-8bc3-d9ba540f318f",
+      "name": "HTTP | Encontrar subtarefa1"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "id": "={{ $('Asana | Get New Task Details').item.json.parent.gid }}"
+      },
+      "type": "n8n-nodes-base.asana",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        912
+      ],
+      "id": "96ae1d6b-edb5-4d0b-989c-3599b87df7f2",
+      "name": "Get a task1",
+      "credentials": {
+        "asanaApi": {
+          "id": "",
+          "name": "Asana account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6a6899db-c214-42f8-9905-9a405842dc1e",
+              "name": "Id_Subtarefa",
+              "value": "={{ $json.gid }}",
+              "type": "string"
+            },
+            {
+              "id": "2166696f-fdad-43a6-b986-a66a1eb2984e",
+              "name": "Link_Subtarefa",
+              "value": "={{ $json.permalink_url }}",
+              "type": "string"
+            },
+            {
+              "id": "6e6b0d0e-5139-4c8b-8e18-b1d64bded927",
+              "name": "subtarefa",
+              "value": "={{ $json.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1440,
+        912
+      ],
+      "id": "edbf51cd-ad08-415e-b143-3cb372dbe244",
+      "name": "Edit Fields5"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f008ea32-f7ff-4e5e-8e3b-4cd2a8f395ee",
+              "name": "Nome_Projeto",
+              "value": "={{ $json.projects[0].name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1760,
+        912
+      ],
+      "id": "359ae74a-0317-4773-b6d8-2e8ccbd0f6b5",
+      "name": "Edit Fields6"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/n8n",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "=5500000000000"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.mensagem }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "468c0039-df7b-4fa3-bea0-ed309ab6fb29",
+      "name": "(EVO) Enviar Mensagem",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3136,
+        864
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "evo_Api"
+        }
+      },
+      "notes": "TEMPLATE DESENVOLVIDO POR NOCODE STARTUP\nhttps://nocodestartup.io/\n\nFORMAÇÃO GESTOR DE AGENTES DE IA:\nhttps://nocodestartup.io/formacao-gestor-agentes-ia/"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7b86abf8-c7c5-4bfb-9a87-7178da09ec3a",
+              "name": "mensagem",
+              "value": "={{ $json.mensagem }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2976,
+        864
+      ],
+      "id": "eba019e3-b373-41e0-8dd6-1ff201082e77",
+      "name": "Edit Fields7"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3ce0b5ec-af9e-441a-85de-92f6aca030d6",
+              "leftValue": "={{ $json['Descrição_Sub'] }}",
+              "rightValue": "#wpp",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2624,
+        912
+      ],
+      "id": "3d92368b-9d32-4ef6-92c4-ba7cb99414cc",
+      "name": "If4"
+    },
+    {
+      "parameters": {
+        "url": "=https://app.asana.com/api/1.0/tasks/{{ $('Edit Fields5').item.json.Id_Subtarefa }}/stories",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json"
+            },
+            {
+              "name": "authorization",
+              "value": "=Bearer {{ $env.ASANA_TOKEN }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1904,
+        912
+      ],
+      "id": "637373c5-b480-40f7-b32c-0ffebfa7dd74",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ebc42305-68de-46b6-8867-ecbe70e4a282",
+              "name": "Descrição_Sub",
+              "value": "={{ $('HTTP | Encontrar subtarefa1').item.json.data.notes }}",
+              "type": "string"
+            },
+            {
+              "id": "dd0cd4be-b2d7-4a6d-a410-94f7f8c626d9",
+              "name": "tarefa_concluida",
+              "value": "={{ $('HTTP | Encontrar subtarefa1').item.json.data.name }}",
+              "type": "string"
+            },
+            {
+              "id": "7a4800f7-d72a-49c0-aa45-5ba25e07e881",
+              "name": "Usuario_Acao",
+              "value": "={{ $('HTTP Request1').item.json.data[2].created_by.name }}",
+              "type": "string"
+            },
+            {
+              "id": "eb139de8-6924-450d-84a5-c0672f0b056f",
+              "name": "data_conclusão",
+              "value": "={{ $json.data_conclusao }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2432,
+        912
+      ],
+      "id": "2dc12b82-4c82-4355-9243-1a08bef16bab",
+      "name": "Edit Fields8"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ===============================\n// Code7 — Montagem da mensagem (ATUALIZADO)\n// ===============================\n\n// Projeto\nconst nomeProjeto =\n  $('Edit Fields6').item.json.Nome_Projeto ?? 'Projeto não identificado';\n\n// Card (tarefa pai)\nconst nomeCard =\n  $('Get a task1').item.json.name ?? 'Card não identificado';\n\n// Subtarefa\nconst nomeSubtarefa =\n  $('Edit Fields5').item.json.subtarefa\n  ?? $('Edit Fields8').item.json.tarefa_concluida\n  ?? 'Subtarefa não identificada';\n\n// Link da subtarefa\nconst linkSubtarefa =\n  $('Edit Fields5').item.json.Link_Subtarefa ?? '';\n\n// Usuário que concluiu\nconst usuarioConclusao =\n  $('Edit Fields8').item.json.Usuario_Acao ?? 'Usuário não identificado';\n\n// Data da conclusão\nconst dataConclusao =\n  $('Edit Fields8').item.json.data_conclusão ?? null;\n\nconst dataFormatada = dataConclusao\n  ? new Date(dataConclusao).toLocaleString('pt-BR')\n  : 'Data não identificada';\n\n// ===============================\n// Mensagem final\n// ===============================\nconst mensagem = `✅ Subtarefa concluída!\n\n📌 Projeto: ${nomeProjeto}\n🗂 Card: ${nomeCard}\n📝 Subtarefa: ${nomeSubtarefa}\n\n👤 Concluído por: ${usuarioConclusao}\n🕒 Data: ${dataFormatada}\n\n🔗 ${linkSubtarefa}`;\n\n// ===============================\n// Retorno\n// ===============================\nreturn [\n  {\n    json: {\n      mensagem\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2816,
+        864
+      ],
+      "id": "6c3e8099-ad72-4b78-bcfb-2f81f9a51666",
+      "name": "Code7"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ===============================\n// Identificar quem concluiu a tarefa (Asana)\n// ===============================\n\n// Puxa diretamente o output do HTTP Request de stories\nconst stories = $items(\"HTTP Request1\")[0]?.json?.data ?? [];\n\n// Segurança\nif (!Array.isArray(stories)) {\n  return [{\n    json: {\n      usuario_conclusao: 'Estrutura inválida',\n      usuario_gid: null,\n      data_conclusao: null\n    }\n  }];\n}\n\n// Filtra apenas conclusões\nconst conclusoes = stories.filter(story =>\n  story.resource_subtype === 'marked_complete'\n);\n\n// Se não encontrou conclusão\nif (conclusoes.length === 0) {\n  return [{\n    json: {\n      usuario_conclusao: 'Não identificado',\n      usuario_gid: null,\n      data_conclusao: null\n    }\n  }];\n}\n\n// Pega a última conclusão (mais recente)\nconst ultimaConclusao = conclusoes.sort(\n  (a, b) => new Date(a.created_at) - new Date(b.created_at)\n).pop();\n\nreturn [{\n  json: {\n    usuario_conclusao: ultimaConclusao.created_by?.name ?? 'Desconhecido',\n    usuario_gid: ultimaConclusao.created_by?.gid ?? null,\n    data_conclusao: ultimaConclusao.created_at ?? null\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2288,
+        912
+      ],
+      "id": "4558763a-ff3a-4e66-a7d0-b68713084cca",
+      "name": "Code8"
+    }
+  ],
+  "connections": {
+    "Set | Normalize Task Context": {
+      "main": [
+        [
+          {
+            "node": "Buscar Coluna Novo Cartao",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF | Is Not Template Task": {
+      "main": [
+        [
+          {
+            "node": "Buscar Detalhes cartão Base",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Asana | Get New Task Details1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF | Is Task Added to Section": {
+      "main": [
+        [
+          {
+            "node": "Buscar_Novo_Cartao",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Asana | Get New Task Details2": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscas_Comentarios": {
+      "main": [
+        [
+          {
+            "node": "Code4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "subtask_Base": {
+      "main": [
+        [
+          {
+            "node": "Atualizar novo cartao",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Code3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Replace Me": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar_Novo_Cartao": {
+      "main": [
+        [
+          {
+            "node": "Set | Normalize Task Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Coluna Novo Cartao": {
+      "main": [
+        [
+          {
+            "node": "IF | Is Not Template Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Detalhes cartão Base": {
+      "main": [
+        [
+          {
+            "node": "Buscar subtasks base",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar subtasks base": {
+      "main": [
+        [
+          {
+            "node": "subtask_Base",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Atualizar novo cartao": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP | Encontrar descrição da subtarefa": {
+      "main": [
+        [
+          {
+            "node": "Buscas_Comentarios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code3": {
+      "main": [
+        [
+          {
+            "node": "HTTP | Encontrar descrição da subtarefa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If | Verificar se existe comentário": {
+      "main": [
+        [
+          {
+            "node": "Set | Com #wpp",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set | Sem o #wpp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set | Com #wpp": {
+      "main": [
+        [
+          {
+            "node": "Asana | Adicionar subtarefas no card novo1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set | Sem o #wpp": {
+      "main": [
+        [
+          {
+            "node": "Asana | Adicionar subtarefas no card novo1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code4": {
+      "main": [
+        [
+          {
+            "node": "If | Verificar se existe comentário",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Asana | Adicionar subtarefas no card novo1": {
+      "main": [
+        [
+          {
+            "node": "Replace Me",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Code5",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP | Encontrar subtarefa": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a task": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Get a task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "(EVO) Enviar Mensagem1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "HTTP | Encontrar subtarefa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields4": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "Asana | Get New Task Details1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code5": {
+      "main": [
+        [
+          {
+            "node": "Asana | Get New Task Details2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If3": {
+      "main": [
+        [
+          {
+            "node": "Code6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code6": {
+      "main": [
+        [
+          {
+            "node": "Asana | Get New Task Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Asana | Get New Task Details": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP | Encontrar subtarefa1": {
+      "main": [
+        [
+          {
+            "node": "Code8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a task1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields5": {
+      "main": [
+        [
+          {
+            "node": "Get a task1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields6": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields7": {
+      "main": [
+        [
+          {
+            "node": "(EVO) Enviar Mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If4": {
+      "main": [
+        [
+          {
+            "node": "Code7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "HTTP | Encontrar subtarefa1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields8": {
+      "main": [
+        [
+          {
+            "node": "If4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code7": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code8": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PROJETO A - 2026": {
+      "main": [
+        [
+          {
+            "node": "IF | Is Task Added to Section",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ATENDIMENTO UNIDADE B - 2026": {
+      "main": [
+        [
+          {
+            "node": "IF | Is Task Added to Section",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "name": "Automação de projetos no Asana com notificação"
+}

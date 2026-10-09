@@ -1,0 +1,434 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "path": "agente-vendedor"
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpTrigger",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "726749da-3443-49e6-880a-031ae1289ed1",
+      "name": "MCP Server Trigger",
+      "webhookId": "28b0900e-1050-4e0a-a2c2-9ac27b4aac8c"
+    },
+    {
+      "parameters": {
+        "content": "Tabelas Clientes ",
+        "height": 320,
+        "width": 352
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -576,
+        304
+      ],
+      "id": "68a39e18-f53d-4913-aa50-8a8fa1d46338",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Utilize essa ferramenta para atualizar dados dos clientes do banco de dados.\n\n#Fluxo\n- Primeiramente execute a tool LER cliente;\n- Puxe dados e client_id do cliente que está em atendimento;\n- Atualize o cliente com seu nome, telefone e endereco.",
+        "operation": "update",
+        "tableId": "clientes",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "cliente_id",
+              "condition": "eq",
+              "keyValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('conditions0_Field_Value', `cliente_id do cliente em atendimento.`, 'string') }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fieldValues0_Field_Value', `nome do cliente`, 'string') }}"
+            },
+            {
+              "fieldId": "endereco",
+              "fieldValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fieldValues1_Field_Value', `endereço do cliente, juntar (rua, numero, bairro e cidade) em um texto só`, 'string') }}"
+            },
+            {
+              "fieldId": "telefone",
+              "fieldValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fieldValues2_Field_Value', `telefone do cliente`, 'string') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        -336,
+        416
+      ],
+      "id": "af5e610c-ef8c-4333-8971-e6b9b4a8e218",
+      "name": "Atualizar_clientes",
+      "credentials": {
+        "supabaseApi": {
+          "id": "",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Tabela Pedidos",
+        "height": 304,
+        "width": 560
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        320
+      ],
+      "id": "9a4323a3-de75-4930-aff0-c159f58e2ff2",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Utilize essa ferramenta para puxar todos os pedidos do banco de dados ou para descobrir detalhes de um pedido específico.\n\n#Fluxo\n- Ative quando precisar de informações sobre pedido de algum cliente;\n- Caso precise de dados de um pedido especifico, pergunte ao usuário o id do pedido\n\n#Obs\n- Não compartilhe informações de pedidos que não são do usuário.s",
+        "operation": "getAll",
+        "tableId": "pedidos"
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        -16,
+        416
+      ],
+      "id": "452f7309-3c98-4ca6-a142-bfc99d81ce45",
+      "name": "LER_pedidos",
+      "credentials": {
+        "supabaseApi": {
+          "id": "",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Utilize essa ferramenta para criar novos pedidos.\n\n#Fluxo\n- Para criar um novo pedido é necessário que o usuário informe todos os produtos que deseja incluir no carrinho. Antes de criar o pedido, confirme com o usuário se está tudo certo, uma vez criado o pedido não pode ser alterado;\n- Utilize a tool LER produtos para puxar dados dos produtos;\n- Só crie um novo pedido depois que o usuário confirmar os produtos que deseja;\n- Utilize a tool calculadora para somar o valor total do pedido;\n- Registre um novo pedido. Em resumo coloque quantidade de cada item e valor separado de cada item. Exemplo:\n1 X Pizza Portuguesa R$42/unid\n1 X Pizza de calabresa R$60/unid ",
+        "tableId": "pedidos",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "cliente_id",
+              "fieldValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fieldValues0_Field_Value', `id do cliente em atendimento`, 'string') }}"
+            },
+            {
+              "fieldId": "resumo",
+              "fieldValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fieldValues1_Field_Value', `Exemplo:\n1 X Pizza Portuguesa R$42/unid\n1 X Pizza de calabresa R$60/unid `, 'string') }}"
+            },
+            {
+              "fieldId": "valor",
+              "fieldValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fieldValues2_Field_Value', `Valor TOTAl do pedido, utilize a tool CALCULADORA para pegar o valor TOTAL`, 'string') }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fieldValues3_Field_Value', `A PAGAR`, 'string') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        128,
+        416
+      ],
+      "id": "a18e8e65-034c-4f2c-89c2-615abb580018",
+      "name": "Criar_pedido",
+      "credentials": {
+        "supabaseApi": {
+          "id": "",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        272,
+        416
+      ],
+      "id": "37936e7f-c84a-437a-be6d-0e648350f5cf",
+      "name": "calculadora"
+    },
+    {
+      "parameters": {
+        "content": "PAGAMENTOS ASAAS",
+        "height": 304,
+        "width": 512,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        544,
+        320
+      ],
+      "id": "ff4c812d-f7f4-4667-83e5-5541c99326d1",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Utilize essa ferramenta para criar cliente no Gateway de pagamento Asaas. Essa etapa é necessária para depois criarmos uma cobrança para o cliente e um link de pagamento único para ele.\n\nPara ativar essa tool é necessário do nome, CPF do cliente. ",
+        "method": "POST",
+        "url": "https://api-sandbox.asaas.com/v3/customers",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $env.ASAAS_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "name",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', `nome do cliente`, 'string') }}"
+            },
+            {
+              "name": "cpfCnpj",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters1_Value', `CPF do cliente`, 'string') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        608,
+        432
+      ],
+      "id": "491ff2d3-ca67-4bb0-9058-7199bd50f832",
+      "name": "Criar_cliente"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Utilize essa ferramenta para criar uma cobrança para o cliente e um link de pagamento único para ele.\n\n#Fluxo Sugerido\n- É necessário primeiramente ativar a ferramenta Criar Cliente Asaas. Pois assim teremos o id do cliente que é o valor de \"customer\", um Identificador único do cliente no Asaas;\n- Além disso, é necessário o billingType, que é a forma de pagamento. O nome enviado deve ser BOLETO, CREDIT_CARD ou PIX nesse padrão;\n- Depois que executar essa ferramenta, é necessário atualizar o pedido executando a ferramenta ATUALIZAR pedido. Pegue o \"invoice_url\" e \"id\" do resultado gerado em Gerar Cobrança.\n- Atualize o pedido\n",
+        "method": "POST",
+        "url": "https://api-sandbox.asaas.com/v3/payments",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $env.ASAAS_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "billingType",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', `forma de pagamento pode ser apenas BOLETO, CREDIT_CARD ou PIX. Os nomes tem que ser exatamente como descritos.`, 'string') }}"
+            },
+            {
+              "name": "customer",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters1_Value', `Esse é o id do cliente criado no Asaas. É necessario executar a ferramenta criar cliente para pagar esse id.`, 'string') }}"
+            },
+            {
+              "name": "value",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters2_Value', `Valor total do pedido do cliente.`, 'string') }}"
+            },
+            {
+              "name": "dueDate",
+              "value": "={{ $now.plus({ days: 1 }).toFormat('yyyy-MM-dd') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        784,
+        432
+      ],
+      "id": "b1bad6a2-3248-4e6b-b63f-40aaece9fb9c",
+      "name": "Criar_cobranca"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Utilize essa ferramenta para atualizar um pedido\n\n#fluxo sugerido\n- Execute a ferramenta LER_pedidos para pegar o id pedido em questão, basta achar onde o client_id seja igual ao id do cliente em atendimento. Pegue o pedido_id.\n- Atualize o pedido com novas informações: invoiceUrl e id_saas (customer)",
+        "operation": "update",
+        "tableId": "pedidos",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "pedido_id",
+              "condition": "eq",
+              "keyValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('conditions0_Field_Value', `pedido_id do pedido do cliente. NÃO é o cliente_id`, 'string') }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "invoiceUrl",
+              "fieldValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fieldValues0_Field_Value', `url invoice do resultado da execução da ferramenta Gerar cobrança`, 'string') }}"
+            },
+            {
+              "fieldId": "id_asaas",
+              "fieldValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fieldValues1_Field_Value', `id da cobrança de execução da ferramenta Gerar Cobrança Asaas (customer)`, 'string') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        944,
+        432
+      ],
+      "id": "8bca705c-c5ef-4de2-af02-bb9f238760e9",
+      "name": "Criar_pedido1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Utilize essa ferramenta para puxar todos os clientes do banco de dados ou para descobrir detalhes de um cliente específico.\n\nPara achar um cliente que está sendo atendido, basta buscar pelo cliente_id do cliente em atendimento no tabela clientes.\n\n#Obs\n- Nunca compartilhe dados de outros clientes",
+        "operation": "getAll",
+        "tableId": "clientes"
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        -512,
+        416
+      ],
+      "id": "ae06c497-6302-4bce-ad2e-3312f51a59ec",
+      "name": "LER_clientes",
+      "credentials": {
+        "supabaseApi": {
+          "id": "",
+          "name": "Supabase account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Atualizar_clientes": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LER_pedidos": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar_pedido": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "calculadora": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar_cliente": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar_cobranca": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar_pedido1": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LER_clientes": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "name": "MCP Server - pedidos e pagamentos"
+}

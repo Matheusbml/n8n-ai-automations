@@ -1,0 +1,3065 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        640,
+        2512
+      ],
+      "id": "119843ca-ea26-4adb-b367-9a1e089bfd28",
+      "name": "GATILHO"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "38aeb919-74a1-41ff-8643-21ac270ef792",
+              "leftValue": "={{ $now.extract('hours') }}",
+              "rightValue": 4,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            },
+            {
+              "id": "4760efcc-2742-4f0f-a514-8ddd763a9ead",
+              "leftValue": "={{ $now.extract('hours') }}",
+              "rightValue": 19,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        784,
+        2512
+      ],
+      "id": "e6377d5d-482e-459c-8ef3-9ddf0f5f96bb",
+      "name": "Horário comercial"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "Agendamentos",
+        "returnAll": true,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "lembrete_1dia",
+              "condition": "eq",
+              "keyValue": "false"
+            },
+            {
+              "keyName": "data_inicio",
+              "condition": "gt",
+              "keyValue": "={{ $now.set({hour:0, minute:0,second:0, millisecond:0}).plus('1','days') }}"
+            },
+            {
+              "keyName": "data_inicio",
+              "condition": "lt",
+              "keyValue": "={{ $now.set({hour:23, minute:59,second:59, millisecond:59}).plus('1','days') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        928,
+        2512
+      ],
+      "id": "53ad77bd-9698-4656-9ca3-56fd40d790af",
+      "name": "GET CONSULTAS"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1088,
+        2512
+      ],
+      "id": "38066923-4dbb-4913-9c21-e94f3b08d710",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "clientes",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "keyValue": "={{ $json.cliente_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1248,
+        2592
+      ],
+      "id": "5c15b936-8125-4e01-9e61-1ce703186a88",
+      "name": "GET CLIENTE"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0a6aed76-55ff-4ffe-ab50-717c83aacbaf",
+              "name": "texto",
+              "value": "=Olá {{ $json.nome }}, tudo bem?\n\nPassando pra lemmbrar da sua contulsta marcada amanha {{ $('Loop Over Items').item.json.data_inicio.toDateTime().format('dd-MM-yyyy') }} às {{ $('Loop Over Items').item.json.data_inicio.toDateTime().setZone().format('HH:mm') }}\n\nCaso qeuira cancelar basta digitar 'cancealr'.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1408,
+        2592
+      ],
+      "id": "08bb356d-b98a-428a-9ed3-6c99f003abe8",
+      "name": "mensagem"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "afASD",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "TELEFONE",
+              "value": "={{ $('GET CLIENTE').item.json.telefone }}"
+            },
+            {
+              "name": "MENSAGEM",
+              "value": "={{ $json.texto }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1552,
+        2592
+      ],
+      "id": "967c30d2-68e4-410b-9a78-a64f7f46a476",
+      "name": "HTTP Request",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "Agendamentos",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('Loop Over Items').item.json.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "lembrete_1dia",
+              "fieldValue": "true"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1712,
+        2592
+      ],
+      "id": "7030a845-d79c-41d9-a1f2-4b64cad3030d",
+      "name": "FINALIZAR LEMBRETE"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1840,
+        2592
+      ],
+      "id": "3356ed01-8c64-44c4-89f3-107fe25dcd1a",
+      "name": "Wait",
+      "webhookId": "f93e0c7e-8eb9-46f0-96ef-9fd6ef891a4c"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1248,
+        2416
+      ],
+      "id": "b1d4e2f5-3b01-47bc-85fc-46bbcc4c0642",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "content": "## 1 DIA ANTES\n### Ajuste como desejar",
+        "height": 624,
+        "width": 1456,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        576,
+        2240
+      ],
+      "id": "faa7c849-6a70-4dbc-9fd3-d43f859fc1f5",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        640,
+        3168
+      ],
+      "id": "e9e2934e-4633-4d23-94bf-089ed0a70764",
+      "name": "GATILHO1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "38aeb919-74a1-41ff-8643-21ac270ef792",
+              "leftValue": "={{ $now.extract('hours') }}",
+              "rightValue": 4,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            },
+            {
+              "id": "4760efcc-2742-4f0f-a514-8ddd763a9ead",
+              "leftValue": "={{ $now.extract('hours') }}",
+              "rightValue": 19,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        784,
+        3168
+      ],
+      "id": "35c5f3f0-61f8-4bb0-9840-b9770f77739a",
+      "name": "Horário comercial1"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "Agendamentos",
+        "returnAll": true,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "lembrete_2hs",
+              "condition": "eq",
+              "keyValue": "false"
+            },
+            {
+              "keyName": "data_inicio",
+              "condition": "gt",
+              "keyValue": "={{ $now.set({minute:0,second:0, millisecond:0}).plus('2','hours') }}"
+            },
+            {
+              "keyName": "data_inicio",
+              "condition": "lt",
+              "keyValue": "={{ $now.set({minute:59,second:59, millisecond:59}).plus('3','hours') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        928,
+        3168
+      ],
+      "id": "1abf6e81-328a-477f-bb7a-a91316cdff23",
+      "name": "GET CONSULTAS1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1088,
+        3168
+      ],
+      "id": "ff5ac3e4-9adc-4a3e-a04e-83133cb053a9",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "clientes",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "keyValue": "={{ $json.cliente_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1248,
+        3248
+      ],
+      "id": "de59684a-bc6a-48c3-ae7f-4f2b48f90e61",
+      "name": "GET CLIENTE1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0a6aed76-55ff-4ffe-ab50-717c83aacbaf",
+              "name": "texto",
+              "value": "=Olá {{ $json.nome }}, tudo bem?\n\nPassando pra lemmbrar da sua contulsta marcada amanha {{ $('Loop Over Items1').item.json.data_inicio.toDateTime().format('dd-MM-yyyy') }} às {{ $('Loop Over Items1').item.json.data_inicio.toDateTime().setZone().format('HH:mm') }}\n\nCaso qeuira cancelar basta digitar 'cancealr'.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1408,
+        3248
+      ],
+      "id": "c273f8ed-7ff3-4699-b589-a60d22cbbee3",
+      "name": "mensagem1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "afASD",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "TELEFONE",
+              "value": "={{ $('GET CLIENTE1').item.json.telefone }}"
+            },
+            {
+              "name": "MENSAGEM",
+              "value": "={{ $json.texto }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1552,
+        3248
+      ],
+      "id": "3f7d5a99-3cb8-4e89-a088-f047505036b3",
+      "name": "HTTP Request1",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "Agendamentos",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('Loop Over Items1').item.json.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "lembrete_2hs",
+              "fieldValue": "true"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1712,
+        3248
+      ],
+      "id": "dc6b1f11-c360-4811-8029-1f01d7877661",
+      "name": "FINALIZAR LEMBRETE1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1840,
+        3248
+      ],
+      "id": "59003b45-41f7-4785-86fb-4ab75388ae72",
+      "name": "Wait1",
+      "webhookId": "7b621a82-c94b-4e33-aff0-5f045adc247f"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1248,
+        3072
+      ],
+      "id": "3d979928-75f1-4dfa-85ad-01beaac518c7",
+      "name": "No Operation, do nothing1"
+    },
+    {
+      "parameters": {
+        "content": "## 2 HORAS ANTES\n### Ajuste como desejar",
+        "height": 624,
+        "width": 1456,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        576,
+        2896
+      ],
+      "id": "c3926f78-96a3-4038-b1e8-d50c9740999a",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "path": "f91fe93f-565a-41a3-918e-940817b975d9"
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpTrigger",
+      "typeVersion": 2,
+      "position": [
+        2560,
+        2240
+      ],
+      "id": "821ee15d-75b3-4278-ac2b-8c56bc2848ff",
+      "name": "MCP Server Trigger",
+      "webhookId": "70c11bdc-f708-4dc6-86b8-1a2d9637b925"
+    },
+    {
+      "parameters": {
+        "description": "# Buscar profissionais\n- Lista dados dos profissionais como nome, id, agenda_id",
+        "workflowId": {
+          "__rl": true,
+          "value": "iA08jpMhSLPj3aOt",
+          "mode": "list",
+          "cachedResultName": "TOOLS MCP"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "conversa_id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('conversa_id', `Id da conversa do usuário (conversa_id) `, 'string') }}",
+            "tipo": "Consultar profissionais"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "conversa_id",
+              "displayName": "conversa_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "tipo",
+              "displayName": "tipo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        2240,
+        2496
+      ],
+      "id": "9153d163-773b-4630-8e98-4518f7111943",
+      "name": "Buscar_profissionais"
+    },
+    {
+      "parameters": {
+        "tableId": "clientes",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "conversa_id",
+              "fieldValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fieldValues0_Field_Value', `id da conversa do usuário (conversa_id) `, 'string') }}"
+            },
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fieldValues1_Field_Value', `nome completo do usuário  `, 'string') }}"
+            },
+            {
+              "fieldId": "telefone",
+              "fieldValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fieldValues2_Field_Value', `Telefone do usuário `, 'string') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        3152,
+        2496
+      ],
+      "id": "4e00f205-ac1b-4afb-b9f9-d3fa40f14301",
+      "name": "Criar_cliente"
+    },
+    {
+      "parameters": {
+        "description": "# Consultar disponibilidade do profissional escolhido pelo cliente",
+        "workflowId": {
+          "__rl": true,
+          "value": "iA08jpMhSLPj3aOt",
+          "mode": "list",
+          "cachedResultName": "TOOLS MCP"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "conversa_id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('conversa_id', `id da conversa do usuário `, 'string') }}",
+            "tipo": "Consultar disponibilidade",
+            "profissional_id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('profissional_id', `# id do profissional escolhido pelo cliente`, 'string') }}",
+            "data_inicio": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('data_inicio', ``, 'string') }}",
+            "data_fim": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('data_fim', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "conversa_id",
+              "displayName": "conversa_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "tipo",
+              "displayName": "tipo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "profissional_id",
+              "displayName": "profissional_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "data_inicio",
+              "displayName": "data_inicio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "data_fim",
+              "displayName": "data_fim",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        2416,
+        2496
+      ],
+      "id": "3c8feaa1-0eb5-428c-bfdd-08914209d294",
+      "name": "Consultar_disponibilidade"
+    },
+    {
+      "parameters": {
+        "description": "# Agenda, tool para agendar consultas",
+        "workflowId": {
+          "__rl": true,
+          "value": "iA08jpMhSLPj3aOt",
+          "mode": "list",
+          "cachedResultName": "TOOLS MCP"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "conversa_id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('conversa_id', `# conversa id do usuário `, 'string') }}",
+            "tipo": "Agendar",
+            "profissional_id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('profissional_id', `id do profissional selecionado `, 'string') }}",
+            "data_inicio": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('data_inicio', ``, 'string') }}",
+            "data_fim": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('data_fim', ``, 'string') }}",
+            "titulo": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('titulo', `# titulo da consulta`, 'string') }}",
+            "descrição": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('descri__o', `# descrição detalhada da consulta`, 'string') }}",
+            "agenda_id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('agenda_id', `id da agenda do profissional`, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "conversa_id",
+              "displayName": "conversa_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "tipo",
+              "displayName": "tipo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "profissional_id",
+              "displayName": "profissional_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "data_inicio",
+              "displayName": "data_inicio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "data_fim",
+              "displayName": "data_fim",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "titulo",
+              "displayName": "titulo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "descrição",
+              "displayName": "descrição",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "agenda_id",
+              "displayName": "agenda_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        2560,
+        2496
+      ],
+      "id": "83b6bdf8-3735-4e47-8f09-cca9922b5a8b",
+      "name": "Agendar"
+    },
+    {
+      "parameters": {
+        "description": "# Buscar consultas agendadas do cliente",
+        "workflowId": {
+          "__rl": true,
+          "value": "iA08jpMhSLPj3aOt",
+          "mode": "list",
+          "cachedResultName": "TOOLS MCP"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "conversa_id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('conversa_id', `id da conversa do usuário `, 'string') }}",
+            "tipo": "Buscar consultas"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "conversa_id",
+              "displayName": "conversa_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "tipo",
+              "displayName": "tipo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "profissional_id",
+              "displayName": "profissional_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "data_inicio",
+              "displayName": "data_inicio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "data_fim",
+              "displayName": "data_fim",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "titulo",
+              "displayName": "titulo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "descrição",
+              "displayName": "descrição",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "agenda_id",
+              "displayName": "agenda_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        2704,
+        2496
+      ],
+      "id": "27c448ea-8837-49f0-9b22-64368a6348bf",
+      "name": "Buscar_consultas"
+    },
+    {
+      "parameters": {
+        "description": "# cancelar eventos agendados",
+        "workflowId": {
+          "__rl": true,
+          "value": "iA08jpMhSLPj3aOt",
+          "mode": "list",
+          "cachedResultName": "TOOLS MCP"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "conversa_id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('conversa_id', `id da conversa do usuário`, 'string') }}",
+            "tipo": "Cancelar",
+            "agenda_id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('agenda_id', `# id da agenda onde esta agendado o evento`, 'string') }}",
+            "evento_id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('evento_id', `# id do evento (id_calendar)`, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "conversa_id",
+              "displayName": "conversa_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "tipo",
+              "displayName": "tipo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "profissional_id",
+              "displayName": "profissional_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "data_inicio",
+              "displayName": "data_inicio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "data_fim",
+              "displayName": "data_fim",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "titulo",
+              "displayName": "titulo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "descrição",
+              "displayName": "descrição",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "agenda_id",
+              "displayName": "agenda_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "evento_id",
+              "displayName": "evento_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        2848,
+        2496
+      ],
+      "id": "c13f0c07-dbe7-4ee2-90ea-4ee88a638bef",
+      "name": "cancelar_evento"
+    },
+    {
+      "parameters": {
+        "description": "# Reagendar, tool para Reagendar consultas",
+        "workflowId": {
+          "__rl": true,
+          "value": "iA08jpMhSLPj3aOt",
+          "mode": "list",
+          "cachedResultName": "TOOLS MCP"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "conversa_id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('conversa_id', `# conversa id do usuário `, 'string') }}",
+            "tipo": "Reagendar",
+            "profissional_id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('profissional_id', `id do profissional`, 'string') }}",
+            "data_inicio": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('data_inicio', ``, 'string') }}",
+            "data_fim": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('data_fim', ``, 'string') }}",
+            "titulo": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('titulo', `# titulo da consulta`, 'string') }}",
+            "descrição": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('descri__o', `# descrição detalhada da consulta`, 'string') }}",
+            "agenda_id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('agenda_id', `id da agenda do profissional`, 'string') }}",
+            "evento_id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('evento_id', `id do evento para ser reagendado`, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "conversa_id",
+              "displayName": "conversa_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "tipo",
+              "displayName": "tipo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "profissional_id",
+              "displayName": "profissional_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "data_inicio",
+              "displayName": "data_inicio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "data_fim",
+              "displayName": "data_fim",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "titulo",
+              "displayName": "titulo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "descrição",
+              "displayName": "descrição",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "agenda_id",
+              "displayName": "agenda_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "evento_id",
+              "displayName": "evento_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        3008,
+        2496
+      ],
+      "id": "5b645329-92fb-463d-a29b-dae4abd38182",
+      "name": "Reagendar"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "clientes",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "conversa_id",
+              "condition": "eq",
+              "keyValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('conditions0_Field_Value', `id da conversa do usuário (conversa_id) `, 'string') }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fieldValues0_Field_Value', `nome completo do usuário `, 'string') }}"
+            },
+            {
+              "fieldId": "telefone",
+              "fieldValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fieldValues1_Field_Value', `telefone do usuário `, 'string') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        3280,
+        2496
+      ],
+      "id": "2cd64373-b09c-4b80-8873-34b3b461a14b",
+      "name": "Atualizar_cliente"
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "conversa_id"
+            },
+            {
+              "name": "tipo"
+            },
+            {
+              "name": "profissional_id"
+            },
+            {
+              "name": "data_inicio"
+            },
+            {
+              "name": "data_fim"
+            },
+            {
+              "name": "titulo"
+            },
+            {
+              "name": "descrição"
+            },
+            {
+              "name": "agenda_id"
+            },
+            {
+              "name": "evento_id"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        416,
+        880
+      ],
+      "id": "a0ece0d3-8ed5-4026-9608-a55a0e8beae6",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.tipo }}",
+                    "rightValue": "Consultar profissionais",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "13e001cc-3423-47d1-82ef-24f6a54857a4"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Consultar profissionais"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "e14deb8e-58bc-47e7-9af3-fb92b5a96790",
+                    "leftValue": "={{ $json.tipo }}",
+                    "rightValue": "Consultar disponibilidade",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Consultar disponibilidade"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "e3a1e2bf-312d-449e-a63e-ba7c8cfdf6b2",
+                    "leftValue": "={{ $json.tipo }}",
+                    "rightValue": "Agendar",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Agendar"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "5976bd6c-2fff-487b-8013-b28a36e1a4a0",
+                    "leftValue": "={{ $json.tipo }}",
+                    "rightValue": "Reagendar",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Reagendar"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "96158fda-9831-4282-97ea-697c4f5a36ca",
+                    "leftValue": "={{ $json.tipo }}",
+                    "rightValue": "Cancelar",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Cancelar"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "f7d436ac-0ee7-4dd7-8ec5-21a3ac18c128",
+                    "leftValue": "={{ $json.tipo }}",
+                    "rightValue": "Buscar consultas",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Buscar consultas"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        592,
+        816
+      ],
+      "id": "27ff1cca-1c83-4a75-a36a-a7caa2e25bda",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "profissionais",
+        "returnAll": true,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "agenda_id",
+              "condition": "neq"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        256
+      ],
+      "id": "6cf45305-26a2-4036-ba6f-e2b10e37c8d4",
+      "name": "Consultar profissionais"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "885870dd-2567-4c33-bf1d-f602926d3827",
+              "name": "Profissionais ",
+              "value": "=profissional_Id: {{ $json.id }}\nNome: {{ $json.nome }}\nAgenda_id: {{ $json.agenda_id }}\nDisponibilidade: {{ $json.disponibilidade }}\nespecialidade: {{ $json.especialidade }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1360,
+        256
+      ],
+      "id": "3e5b3434-d246-41ea-bd9e-8a79cf3550ad",
+      "name": "PROFISSIONAIS"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "profissionais",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "keyValue": "={{ $json.profissional_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        496
+      ],
+      "id": "fa7e3a04-d8c9-4c23-90a6-3b585e57962d",
+      "name": "GET PROFI",
+      "alwaysOutputData": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8ac96149-2842-4996-a0d9-b0ae725fa264",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1360,
+        496
+      ],
+      "id": "952a99f9-db7d-4b3c-abce-cd49807a180e",
+      "name": "encontrou?"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "195658e9-436f-4872-9137-b412d79500bc",
+              "name": "Retorno",
+              "value": "id do profissional esta incorreto, execute o buscar profissionais",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1552,
+        672
+      ],
+      "id": "831c49c8-fa0a-4f1a-9947-f234a3664277",
+      "name": "ID errado"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "Agendamentos",
+        "returnAll": true,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "profissional_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.id }}"
+            },
+            {
+              "keyName": "data_inicio",
+              "condition": "gte",
+              "keyValue": "={{ $('When Executed by Another Workflow').item.json.data_inicio.toDateTime().set({hour:0,minute:0, second:0,millisecond:0}) }}"
+            },
+            {
+              "keyName": "data_fim",
+              "condition": "lte",
+              "keyValue": "={{ $('When Executed by Another Workflow').item.json.data_fim.toDateTime().set({hour:23,minute:59, second:59,millisecond:59}) }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1552,
+        496
+      ],
+      "id": "b3df88d6-4c88-4d4f-b753-bc38dd60839f",
+      "name": "GET DISPONIBILIDADE",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "764aa907-da15-4b2f-b73d-25c2164ef7b8",
+              "name": "Horário ",
+              "value": "={{ $json.data_inicio.toDateTime().setZone() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1856,
+        480
+      ],
+      "id": "6abec9a4-8516-4861-9f58-24e87ebf29cd",
+      "name": "SET TIMEZONE"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f4ebb703-3fbb-4b73-bbdf-effcbca36ffc",
+              "name": "Retorno",
+              "value": "Agenda disponível ",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1856,
+        624
+      ],
+      "id": "9d64f372-ff05-4590-9b7c-0b44b0b6fd76",
+      "name": "AGENDA LIVRE"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "513d969d-ae9b-4281-9545-619a62634b59",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1696,
+        496
+      ],
+      "id": "1ed448b4-3a13-4fb3-b463-14947fda7c30",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "content": "# tools de ação do agente\n## Faça os ajustes necessários \n### essas tools oferecem todas as dinamicas entre o google calendar e o supabase, crie os campos e tabelas necessarias seguindo a aula de agendamento",
+        "height": 1988,
+        "width": 2306,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        256,
+        80
+      ],
+      "id": "fa8373e3-6165-4f7a-82ce-f419debef3a1",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "Horário"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        2000,
+        480
+      ],
+      "id": "5bd1ce50-8239-401e-a512-6620e0b964b7",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "Agendamentos",
+        "returnAll": true,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "profissional_id",
+              "condition": "eq",
+              "keyValue": "={{ $('When Executed by Another Workflow').item.json.profissional_id }}"
+            },
+            {
+              "keyName": "data_inicio",
+              "condition": "gte",
+              "keyValue": "={{ $('When Executed by Another Workflow').item.json.data_inicio.toDateTime() }}"
+            },
+            {
+              "keyName": "data_fim",
+              "condition": "lte",
+              "keyValue": "={{ $('When Executed by Another Workflow').item.json.data_fim.toDateTime() }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        864
+      ],
+      "id": "d9a0a72b-7af2-4061-87c0-816bac56bd76",
+      "name": "GET DISPONIBILIDADE1",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "513d969d-ae9b-4281-9545-619a62634b59",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1504,
+        864
+      ],
+      "id": "03173944-ce5d-4615-aba3-dd5fb8151fe6",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f4ebb703-3fbb-4b73-bbdf-effcbca36ffc",
+              "name": "Retorno",
+              "value": "Horairio indisponível ",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1680,
+        976
+      ],
+      "id": "8d72bda4-e98a-4035-a7fe-9a55b2b2f431",
+      "name": "Indisponivel"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "clientes",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "conversa_id",
+              "keyValue": "={{ $('When Executed by Another Workflow').item.json.conversa_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        864
+      ],
+      "id": "2e159fda-71eb-43ba-aacc-7a64520dab25",
+      "name": "GET USER"
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "={{ $('When Executed by Another Workflow').item.json.agenda_id }}",
+          "mode": "id"
+        },
+        "start": "={{ $('When Executed by Another Workflow').item.json.data_inicio.toDateTime() }}",
+        "end": "={{ $('When Executed by Another Workflow').item.json.data_fim.toDateTime() }}",
+        "additionalFields": {
+          "description": "={{ $('When Executed by Another Workflow').item.json['descrição'] }}\n\nCliente: {{ $('GET USER').item.json.nome }}\nTelefone: {{ $('GET USER').item.json.telefone }}",
+          "summary": "={{ $('When Executed by Another Workflow').item.json.titulo }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        1696,
+        816
+      ],
+      "id": "a9a80ee4-af08-4438-856b-3e3f130e782e",
+      "name": "Criar evento",
+      "alwaysOutputData": false,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e5fd3796-87c6-4202-81da-2be181078e9e",
+              "name": "Retorno",
+              "value": "Agenda id errado, consular profissionais ",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1840,
+        864
+      ],
+      "id": "054a41a5-61a2-4f0a-986b-cb9959ff1a28",
+      "name": "Erro ao agendar"
+    },
+    {
+      "parameters": {
+        "tableId": "Agendamentos",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "evento_id",
+              "fieldValue": "={{ $json.id }}"
+            },
+            {
+              "fieldId": "agenda_id",
+              "fieldValue": "={{ $('When Executed by Another Workflow').item.json.agenda_id }}"
+            },
+            {
+              "fieldId": "titulo",
+              "fieldValue": "={{ $('When Executed by Another Workflow').item.json.titulo }}"
+            },
+            {
+              "fieldId": "descrição",
+              "fieldValue": "={{ $json.description }}"
+            },
+            {
+              "fieldId": "link",
+              "fieldValue": "={{ $json.htmlLink }}"
+            },
+            {
+              "fieldId": "data_txt",
+              "fieldValue": "={{ $('When Executed by Another Workflow').item.json.data_inicio.toDateTime().format('dd-MM-yyyy') }}"
+            },
+            {
+              "fieldId": "horario_txt",
+              "fieldValue": "={{ $('When Executed by Another Workflow').item.json.data_inicio.toDateTime().format('HH:mm') }}"
+            },
+            {
+              "fieldId": "cliente_id",
+              "fieldValue": "={{ $('GET USER').item.json.id }}"
+            },
+            {
+              "fieldId": "profissional_id",
+              "fieldValue": "={{ $('When Executed by Another Workflow').item.json.profissional_id }}"
+            },
+            {
+              "fieldId": "data_inicio",
+              "fieldValue": "={{ $('When Executed by Another Workflow').item.json.data_inicio.toDateTime() }}"
+            },
+            {
+              "fieldId": "data_fim",
+              "fieldValue": "={{ $('When Executed by Another Workflow').item.json.data_fim.toDateTime() }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2032,
+        800
+      ],
+      "id": "efa1b29d-73ed-4224-b0d6-a0f089d4ac82",
+      "name": "Adicionar agendamento"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c6a37317-2b3d-4045-9482-c4a184a6e831",
+              "name": "id",
+              "value": "={{ $json.evento_id }}",
+              "type": "string"
+            },
+            {
+              "id": "0d3b80f0-8bb5-4d40-b791-a15d359dee7a",
+              "name": "Agenda_id",
+              "value": "={{ $json.agenda_id }}",
+              "type": "string"
+            },
+            {
+              "id": "ea481041-f76b-43c7-9ae1-b65803b7f17e",
+              "name": "data",
+              "value": "={{ $json.data_txt }}",
+              "type": "string"
+            },
+            {
+              "id": "71633837-0df7-4a56-aeb5-f37c9cc8b6f1",
+              "name": "Horario",
+              "value": "={{ $json.horario_txt }}",
+              "type": "string"
+            },
+            {
+              "id": "1a6841f3-eb42-4efa-906f-a89f9c6a65c9",
+              "name": "titulo",
+              "value": "={{ $json.titulo }}",
+              "type": "string"
+            },
+            {
+              "id": "85c0fc96-1d26-476c-ae03-2f9962025dec",
+              "name": "descrição",
+              "value": "={{ $json['descrição'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2240,
+        800
+      ],
+      "id": "098bf215-3e9b-4c54-8b22-5d3b46b713d8",
+      "name": "retorno do agendamento"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "Agendamentos",
+        "returnAll": true,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "cliente_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.id }}"
+            },
+            {
+              "keyName": "data_inicio",
+              "condition": "gt",
+              "keyValue": "={{ $now }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1376,
+        1760
+      ],
+      "id": "eeba75df-e3df-40e9-96a7-4a9e6e0e5c33",
+      "name": "Listar consultas",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "634a06b5-97b3-4736-8383-d45ed3302729",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1584,
+        1760
+      ],
+      "id": "424aec37-71d5-4de6-9f37-11d684278197",
+      "name": "tem consultas"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1e22e556-6c2d-4c1b-b12c-0423d4519c13",
+              "name": "id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "40ac3c9d-d2e8-42bd-b68e-051fc15a88c2",
+              "name": "evento_id",
+              "value": "={{ $json.evento_id }}",
+              "type": "string"
+            },
+            {
+              "id": "cecdbc61-d661-4ef6-8714-d610ba8f8a06",
+              "name": "agenda_id",
+              "value": "={{ $json.agenda_id }}",
+              "type": "string"
+            },
+            {
+              "id": "e46d27aa-ed72-46bc-b8e5-7c3fa0f4a0a6",
+              "name": "profissional_id",
+              "value": "={{ $json.profissional_id }}",
+              "type": "string"
+            },
+            {
+              "id": "006e0c9e-4efd-4f94-81b1-12f05ce4b14a",
+              "name": "titulo",
+              "value": "={{ $json.titulo }}",
+              "type": "string"
+            },
+            {
+              "id": "597281c6-0837-41f7-babe-3b9e12c1b365",
+              "name": "descrição",
+              "value": "={{ $json['descrição'] }}",
+              "type": "string"
+            },
+            {
+              "id": "9d2c8597-a8ae-49e4-bd27-bbe4c313e133",
+              "name": "data_inicio",
+              "value": "={{ $json.data_inicio.toDateTime().setZone() }}",
+              "type": "string"
+            },
+            {
+              "id": "a88c174e-67b6-425f-b879-c4b47376170c",
+              "name": "data_fim",
+              "value": "={{ $json.data_fim.toDateTime().setZone() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1824,
+        1664
+      ],
+      "id": "35267bfd-ee42-432a-8558-75e40b302ab7",
+      "name": "dados das consultas"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ae80b6c4-4260-4c32-be24-dc46b91e127c",
+              "name": "Retorno",
+              "value": "Não existe consultas para este cliente, sugira um novo agendamento ",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1824,
+        1856
+      ],
+      "id": "1065820d-7216-47fb-b85d-59d103ef4fa5",
+      "name": "retorno"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "calendar": {
+          "__rl": true,
+          "value": "={{ $json.agenda_id }}",
+          "mode": "id"
+        },
+        "eventId": "={{ $json.evento_id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        1200,
+        1424
+      ],
+      "id": "ff07c061-8667-41d0-bb22-5a41bd275d5a",
+      "name": "cancelar evento",
+      "alwaysOutputData": false,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "tableId": "Agendamentos",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "evento_id",
+              "condition": "eq",
+              "keyValue": "={{ $('When Executed by Another Workflow').item.json.evento_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        1408
+      ],
+      "id": "26d68a0d-ea12-4509-a079-b9877d936f91",
+      "name": "Deletar no supabase"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a252ce92-4af3-4fd2-aa21-df81aed184b0",
+              "name": "retorno",
+              "value": "id do evento ou  o id da agenda esta incorreto",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1360,
+        1584
+      ],
+      "id": "f825964c-ed43-4643-9bb4-5c6f1159b416",
+      "name": "retorno1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ae313bdf-9d8c-4755-ac3f-78955a6503fb",
+              "name": "retorno",
+              "value": "=ststus: cancelado com sucesso\ntitulo: {{ $json.titulo }}\ndescrição: {{ $json['descrição'] }}\ndata: {{ $json.data_inicio.toDateTime().setZone() }} - {{ $json.data_fim .toDateTime().setZone()}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1536,
+        1408
+      ],
+      "id": "a4ff62e3-192d-4bda-b66b-b2d584e9d2b3",
+      "name": "detalhes"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "clientes",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "conversa_id",
+              "keyValue": "={{ $('When Executed by Another Workflow').item.json.conversa_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        1168
+      ],
+      "id": "2c39e026-487d-4b86-8ffc-40042fddaa77",
+      "name": "GET USER1"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "calendar": {
+          "__rl": true,
+          "value": "={{ $('When Executed by Another Workflow').item.json.agenda_id }}",
+          "mode": "id"
+        },
+        "eventId": "={{ $('When Executed by Another Workflow').item.json.evento_id }}",
+        "updateFields": {
+          "description": "={{ $('When Executed by Another Workflow').item.json['descrição'] }}",
+          "end": "={{ $('When Executed by Another Workflow').item.json.data_fim.toDateTime() }}",
+          "start": "={{ $('When Executed by Another Workflow').item.json.data_inicio.toDateTime()}}",
+          "summary": "={{ $('When Executed by Another Workflow').item.json.titulo }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        1408,
+        1168
+      ],
+      "id": "b2ec3602-610e-44e1-acd5-479fadf4cf77",
+      "name": "Update an event"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "Agendamentos",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "evento_id",
+              "condition": "eq",
+              "keyValue": "={{ $('When Executed by Another Workflow').item.json.evento_id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "titulo",
+              "fieldValue": "={{ $('When Executed by Another Workflow').item.json.titulo }}"
+            },
+            {
+              "fieldId": "descrição",
+              "fieldValue": "={{ $('When Executed by Another Workflow').item.json['descrição'] }}"
+            },
+            {
+              "fieldId": "data_inicio",
+              "fieldValue": "={{ $('When Executed by Another Workflow').item.json.data_inicio.toDateTime().setZone() }}"
+            },
+            {
+              "fieldId": "data_fim",
+              "fieldValue": "={{ $('When Executed by Another Workflow').item.json.data_fim.toDateTime().setZone() }}"
+            },
+            {
+              "fieldId": "data_txt",
+              "fieldValue": "={{ $('When Executed by Another Workflow').item.json.data_inicio.toDateTime().setZone().format('dd-MM-yyyy') }}"
+            },
+            {
+              "fieldId": "horario_txt",
+              "fieldValue": "={{ $('When Executed by Another Workflow').item.json.data_inicio.toDateTime().setZone().format('HH:mm') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        1168
+      ],
+      "id": "6a7709ca-5376-4afa-b6ad-7e3923254c1e",
+      "name": "atualizar agendamento"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f5d11ac8-4465-4ab6-87cb-d8558d80e4cf",
+              "name": "dados do reagendamento ",
+              "value": "=Status: Reagendamento feito com sucesso\ntitulo: {{ $json.titulo }}\nDescrição: {{ $json['descrição'] }}\ndata: {{ $json.data_inicio }} - {{ $json.data_fim }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1808,
+        1168
+      ],
+      "id": "83da1d90-2699-4f37-a810-dd780ca9458f",
+      "name": "retorno2"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "clientes",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "conversa_id",
+              "keyValue": "={{ $('When Executed by Another Workflow').item.json.conversa_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        1760
+      ],
+      "id": "69b751df-8f51-4468-b8dc-1ac4764c95f2",
+      "name": "GET CLIENTE2"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        3072,
+        1280
+      ],
+      "id": "947de33d-cf7c-476e-9865-eceb9b4719d0",
+      "name": "When chat message received",
+      "webhookId": "6f13e2b0-b44e-45e8-ac22-853346acbe8f"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "=# Prompt:\n## Informações Básicas:\n- Seu nome é: Ana\n- Identidade: Assistente virtual da Clínica NOCODE\n- Empresa: Clínica NOCODE\n- Idioma: Português Brasilero\n- Data e Hora atual: {{ $now.weekdayLong }}, {{ $now.format('dd/MM/yyyy') }}, hora: {{ $now.hour.toString().padStart(2, '0') }}:{{ $now.minute.toString().padStart(2, '0') }} timezone: {{ $now.zone}}\n- Conversa_id: {{ $json.sessionId }}\n\n## Contexto:\nVocê otimiza o fluxo interno da clínica, provendo informações e reduzindo a carga administrativa dos profissionais de saúde.\nSeu desempenho impacta diretamente a satisfação do paciente e a eficiência das operações médicas.\n\n## Perfil:\nVocê é a Ana, Atendente da CLINICA NOCODE, conhecida por sua comunicação humanizada e informal é frequentemente elogiada por ser extremamente atenciosa em seus atendimentos além de priorizar a linguagem informal e OBJETIVA criando proximidade com o usuário.\nOutput: Português do Brasil.\n\n\n## Passo a passo do atendimento:\n1 - Início do atendimento e identificação de interesse em agendar:\n2 - Cumprimente de forma acolhedora 😊.\n3 - Explique que é possível agendar direto por aqui mesmo no WhatsApp, seja por texto ou áudio — ou então \n4 - perguntar a especialidade que o usuario procura\n5 - consulte os profissionais e liste os compativeis com a especialidade.\n6 - Peça nome completo e telefone\n7 - Crie ou atualize o usuario no banco de dados\n8 - Pergunte a data que o usuario deseja e consulte a disponibilidade\n09 - Para reagendar consulte agendamento\n10 - para cancelar consulte agendamentos e envie os dados como id da agenda e evento id para cancelar\n\n## HORÁRIOS DE FUNCIONAMENTO:\n- Segunda a Sábado: 08h às 17h\n- Domingo e Feriados: Fechado\n- LOCALIZAÇÃO E CONTATO:\n- Endereço: Av. Paulista 1100, São Paulo - SP\n- Telefone da clinica: (00) 0000-0000\n- WhatsApp da clinica: (00) 0000-0000\n- E-mail da clinica: contato@clinica-exemplo.com.br\n- Site da clinica: www.nocodeclinicamedica.com.br\n\n## OBSERVAÇÕES FINAIS:\n- Nunca diga que você é uma assistente virtual.\n- Mantenha atendimento sempre humanizado e acolhedor.\n- Nunca agende fora do horário de funcionamento."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        3328,
+        1280
+      ],
+      "id": "553008a0-8256-4ec8-87c7-a4644614fd4d",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "gpt-4o"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        3120,
+        1472
+      ],
+      "id": "e6c0739d-0d1b-4c10-84a0-9a5a6726eaf7",
+      "name": "OpenAI Chat Model"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        3280,
+        1472
+      ],
+      "id": "abd6b33b-8223-42f0-b683-2f506f48930d",
+      "name": "Postgres Chat Memory"
+    },
+    {
+      "parameters": {
+        "content": "Faça os ajustes necessários no Prompt do seu agente",
+        "height": 220,
+        "width": 330,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3296,
+        1184
+      ],
+      "id": "ebc1c1dc-5774-4d67-a8c4-0bca5001c15d",
+      "name": "Sticky Note22"
+    },
+    {
+      "parameters": {
+        "sseEndpoint": "https://SEU-N8N/mcp/86b021dc-160c-4483-b784-37cb65f043ef"
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1,
+      "position": [
+        3392,
+        1488
+      ],
+      "id": "64ddd082-5d2b-4e60-8fca-82b65b697377",
+      "name": "MCP"
+    }
+  ],
+  "connections": {
+    "GATILHO": {
+      "main": [
+        [
+          {
+            "node": "Horário comercial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Horário comercial": {
+      "main": [
+        [
+          {
+            "node": "GET CONSULTAS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET CONSULTAS": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "GET CLIENTE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET CLIENTE": {
+      "main": [
+        [
+          {
+            "node": "mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "mensagem": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "FINALIZAR LEMBRETE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FINALIZAR LEMBRETE": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GATILHO1": {
+      "main": [
+        [
+          {
+            "node": "Horário comercial1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Horário comercial1": {
+      "main": [
+        [
+          {
+            "node": "GET CONSULTAS1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET CONSULTAS1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "GET CLIENTE1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET CLIENTE1": {
+      "main": [
+        [
+          {
+            "node": "mensagem1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "mensagem1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "FINALIZAR LEMBRETE1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FINALIZAR LEMBRETE1": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar_profissionais": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar_cliente": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar_disponibilidade": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agendar": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar_consultas": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "cancelar_evento": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reagendar": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Atualizar_cliente": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Consultar profissionais",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "GET PROFI",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "GET USER",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "GET USER1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "cancelar evento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "GET CLIENTE2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar profissionais": {
+      "main": [
+        [
+          {
+            "node": "PROFISSIONAIS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET PROFI": {
+      "main": [
+        [
+          {
+            "node": "encontrou?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ID errado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "encontrou?": {
+      "main": [
+        [
+          {
+            "node": "GET DISPONIBILIDADE",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ID errado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET DISPONIBILIDADE": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SET TIMEZONE": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "SET TIMEZONE",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AGENDA LIVRE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET DISPONIBILIDADE1": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Criar evento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Indisponivel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET USER": {
+      "main": [
+        [
+          {
+            "node": "GET DISPONIBILIDADE1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar evento": {
+      "main": [
+        [
+          {
+            "node": "Adicionar agendamento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Erro ao agendar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Adicionar agendamento": {
+      "main": [
+        [
+          {
+            "node": "retorno do agendamento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Listar consultas": {
+      "main": [
+        [
+          {
+            "node": "tem consultas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tem consultas": {
+      "main": [
+        [
+          {
+            "node": "dados das consultas",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "retorno",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "cancelar evento": {
+      "main": [
+        [
+          {
+            "node": "Deletar no supabase",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "retorno1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deletar no supabase": {
+      "main": [
+        [
+          {
+            "node": "detalhes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET USER1": {
+      "main": [
+        [
+          {
+            "node": "Update an event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update an event": {
+      "main": [
+        [
+          {
+            "node": "atualizar agendamento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "atualizar agendamento": {
+      "main": [
+        [
+          {
+            "node": "retorno2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET CLIENTE2": {
+      "main": [
+        [
+          {
+            "node": "Listar consultas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MCP": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "name": "Agente de agendamento com MCP e lembretes"
+}

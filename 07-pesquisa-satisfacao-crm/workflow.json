@@ -1,0 +1,240 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 11
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b31c7649-874b-4a8b-bf85-620fce2a1ca0",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "resource": "list",
+        "operation": "getCards",
+        "id": "68b1f10ff7f1976b713d8846",
+        "returnAll": true,
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.trello",
+      "typeVersion": 1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "8bf97288-384e-43ee-9ffd-ad1add41a45e",
+      "name": "Get all cards in a list",
+      "credentials": {
+        "trelloApi": {
+          "id": "",
+          "name": "Trello account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.omie.com.br/api/v1/crm/oportunidades/",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"call\": \"ListarOportunidades\",\n  \"app_key\": \"SUA_APP_KEY_AQUI\",\n  \"app_secret\": \"SEU_APP_SECRET_AQUI\",\n  \"param\": [\n    {\n      \"cDescricao\": \"{{ $json.numero_proposta }}\"\n    }\n  ]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        640,
+        0
+      ],
+      "id": "4be568c8-b48a-4b86-8861-a7011172e189",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.Email_Cliente }}",
+        "subject": "=Pesquisa de Satisfação - Sua Opinião é Importante, {{ $json.Nome_Cliente }}!",
+        "message": "=<p>Ei {{ $json.Nome_Cliente }}, bom dia!</p> <p>Aqui é da equipe de Qualidade, tudo bom?</p> <p>Feliz de saber que nos escolheram para atender as necessidades recentes de medição e monitoramento.</p> <p>Como parte de nosso compromisso com a excelência, gostaria de te convidar a participar de nossa Pesquisa de Satisfação. Suas respostas nos ajudarão a entender melhor suas necessidades e a melhorar continuamente nossos serviços. Acredito que apenas 5 minutos do seu tempo será tomado.</p> <p>Clique aqui: <a href=\"https://forms.example.com/pesquisa\">https://forms.example.com/pesquisa</a></p> <p>Qualquer dúvida ou consideração estarei à disposição!</p> <p>Atenciosamente,</p>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "90a815ee-c959-40b8-92ca-e7a3c863e05c",
+      "name": "Send a message",
+      "webhookId": "d2374bae-6ce5-435d-bee0-27049d12d77e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "48b21acf-9849-4466-a26e-4821545cf0f7",
+              "name": "numero_proposta",
+              "value": "={{ $json.name.split(' - ')[0] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        416,
+        0
+      ],
+      "id": "92f8fd1a-c000-4d26-ac67-84794a7a0655",
+      "name": "separar_proposta"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "id": {
+          "__rl": true,
+          "value": "={{ $('Get all cards in a list').item.json.id }}",
+          "mode": "id"
+        },
+        "updateFields": {
+          "idList": "68b1f10ff7f1976b713d8847"
+        }
+      },
+      "type": "n8n-nodes-base.trello",
+      "typeVersion": 1,
+      "position": [
+        1248,
+        0
+      ],
+      "id": "5967ee23-341c-434f-8ca8-ab6a217df535",
+      "name": "Update a card",
+      "credentials": {
+        "trelloApi": {
+          "id": "",
+          "name": "Trello account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1979e35d-b27e-4dcd-b3c0-424799ab9c12",
+              "name": "Nome_Cliente",
+              "value": "Cliente Teste",
+              "type": "string"
+            },
+            {
+              "id": "2f8b5ea8-922f-450d-9e7e-de3128389418",
+              "name": "Email_Cliente",
+              "value": "contato@exemplo.com",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        848,
+        0
+      ],
+      "id": "64b044a8-1c93-4000-ba05-182d6d401044",
+      "name": "separar_omie"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get all cards in a list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get all cards in a list": {
+      "main": [
+        [
+          {
+            "node": "separar_proposta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "separar_omie",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Update a card",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "separar_proposta": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "separar_omie": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "name": "Pesquisa de satisfação pós-venda (Trello + Omie + Gmail)"
+}

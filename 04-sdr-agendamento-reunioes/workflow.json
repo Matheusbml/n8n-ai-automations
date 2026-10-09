@@ -1,0 +1,2040 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "63c77045-e0b9-47c1-921e-c6a84facb8ba",
+              "name": "codigowhats",
+              "value": "={{ $('ORGANIZA DADOS').item.json.Telefone }}",
+              "type": "string"
+            },
+            {
+              "id": "219caf34-de9e-4bdb-b830-de28869b5115",
+              "name": "mensagem",
+              "value": "={{ $('ORGANIZA DADOS').item.json['msg texto'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1808,
+        736
+      ],
+      "id": "ee8eb7b3-f554-443f-a85a-2a9967540ca5",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "amount": 7
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2192,
+        736
+      ],
+      "id": "75c77f9e-b39a-490b-b63f-e5eba12b3fe3",
+      "name": "Wait",
+      "webhookId": "fb1c4f4d-6070-4197-b968-1d97900bd2a9"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "mensagens",
+        "key": "={{ $json.codigowhats }}",
+        "keyType": "=automatic",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2416,
+        736
+      ],
+      "id": "54dab87d-cf58-4940-b2f6-9ffcbc3a49b7",
+      "name": "Redis2",
+      "credentials": {
+        "redis": {
+          "id": "",
+          "name": "Redis"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b770ba3b-41e3-43f1-9882-b857704889c0",
+              "leftValue": "={{ $json.mensagens.last() }}",
+              "rightValue": "={{ $('Wait').item.json.mensagem }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2608,
+        736
+      ],
+      "id": "0d3c58e1-c06f-4321-a4d0-f67383586603",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2832,
+        800
+      ],
+      "id": "673eb6d8-c491-4014-8dd3-6cab1b64fc2d",
+      "name": "No Operation, do nothing1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a00ba7e0-5adc-4bf2-b9ca-08167dcba8ca",
+              "name": "mensagens",
+              "value": "={{ $('Redis2').item.json.mensagens.join('\\n') }}",
+              "type": "string"
+            },
+            {
+              "id": "333dc48c-80e1-4f47-b419-04a0e90ddfdd",
+              "name": "whats",
+              "value": "={{ $('Wait').item.json.codigowhats }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2832,
+        656
+      ],
+      "id": "2d51bf5f-d530-4b1e-994e-2c12bd2ddb25",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        5120,
+        848
+      ],
+      "id": "710db6e5-f553-4b5e-ba8e-06a6412ed672",
+      "name": "Loop Over Items1",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        5344,
+        864
+      ],
+      "id": "92ba5be8-3dbe-48d6-b101-a44469be6aa1",
+      "name": "Wait1",
+      "webhookId": "53bc121d-6f26-4d08-8121-20f4b2610ce6"
+    },
+    {
+      "parameters": {
+        "sortFieldsUi": {
+          "sortField": [
+            {
+              "fieldName": "output.blocos"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.sort",
+      "typeVersion": 1,
+      "position": [
+        4896,
+        848
+      ],
+      "id": "071ae8f0-7e67-4390-873e-f258caac0d9e",
+      "name": "Sort"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "output.blocos",
+        "include": "allOtherFields",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        4672,
+        848
+      ],
+      "id": "f434de7d-fe6c-4401-b658-5f9b5f0a79fc",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('RECEBER WHATSAPP').item.json.body.message.text }}",
+                    "rightValue": "ATV",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "ed9cd254-c42f-449f-90d2-f3e45b2bb5f3"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "ATIVAR"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "750906ad-8534-4dc5-9482-b4d099eebe8e",
+                    "leftValue": "={{ $('RECEBER WHATSAPP').item.json.body.message.text }}",
+                    "rightValue": "..",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "PAUSAR"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1120,
+        464
+      ],
+      "id": "f2e99fe4-5ed8-43a3-8778-acab59c835ad",
+      "name": "PAUSAR/ATIVAR"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "documentId": {
+          "__rl": true,
+          "value": "SEU_ID",
+          "mode": "list",
+          "cachedResultName": "Pausados_IA"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Página1"
+        },
+        "startIndex": "={{ $json.row_number }}"
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1424,
+        288
+      ],
+      "id": "f900786d-1907-46b6-8025-c3571f158c63",
+      "name": "DELETAR PAUSADO",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('ORGANIZA DADOS').item.json.Baseurl }}/message/download",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "token",
+              "value": "={{ $env.UAZAPI_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "id",
+              "value": "={{ $('ORGANIZA DADOS').item.json['ID MSG'] }}"
+            },
+            {
+              "name": "return_base64",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2016,
+        912
+      ],
+      "id": "59011f79-450e-4ac0-823b-46f2d88c89b4",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "23a20286-a11b-4162-8782-d65b286b952b",
+              "name": "base64",
+              "value": "={{ $json.base64Data }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2240,
+        912
+      ],
+      "id": "4f1de5d1-9b80-4862-90ed-b41a4de178a8",
+      "name": "Base"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "base64",
+        "binaryPropertyName": "data2",
+        "options": {
+          "fileName": "audio.mp3",
+          "mimeType": "audio/mpeg"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        2464,
+        912
+      ],
+      "id": "fe93f013-1da3-46f7-87c4-aac4f0e42ed0",
+      "name": "Convert to File1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "23a20286-a11b-4162-8782-d65b286b952b",
+              "name": "id",
+              "value": "={{ $('RECEBER WHATSAPP').item.json.body.data.key.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1776,
+        912
+      ],
+      "id": "004b49da-a1ab-45a2-8f9f-4cf60ded10cd",
+      "name": "Edit Fields3"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('RECEBER WHATSAPP').item.json.body.server_url }}/chat/getBase64FromMediaMessage/{{ $('RECEBER WHATSAPP').item.json.body.instance }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.EVOLUTION_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"message\": {\n    \"key\": {\n      \"id\": \"{{ $json.id }}\"\n    }\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2016,
+        1104
+      ],
+      "id": "098cd98d-9456-4866-b5d0-fbc616b015a5",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "23a20286-a11b-4162-8782-d65b286b952b",
+              "name": "base64",
+              "value": "={{ $json.base64 }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2240,
+        1104
+      ],
+      "id": "c27dc2d5-2908-4886-a93f-7a7ce24289dc",
+      "name": "Base1"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "base64",
+        "binaryPropertyName": "data2",
+        "options": {
+          "fileName": "audio.mp3",
+          "mimeType": "={{ $('HTTP Request1').item.json.mimetype }}"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        2464,
+        1104
+      ],
+      "id": "55719e13-be24-442c-89ab-a6c416756fc4",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "23a20286-a11b-4162-8782-d65b286b952b",
+              "name": "id",
+              "value": "={{ $('RECEBER WHATSAPP').item.json.body.data.key.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1792,
+        1104
+      ],
+      "id": "2faff837-8ef4-4626-944e-448542d1f625",
+      "name": "Edit Fields4"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ec44986d-cb63-456f-8b47-0d9f4e900abd",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3952,
+        832
+      ],
+      "id": "b59250ae-e404-468a-8540-011564991978",
+      "name": "If3"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        4336,
+        1072
+      ],
+      "id": "e28b3e07-f3e1-42ba-a7b7-0f4ee97917e4",
+      "name": "OpenAI Chat Model2",
+      "credentials": {
+        "openAiApi": {
+          "id": "",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"blocos\": [\n    {\n      \"ordem\": 0,\n      \"texto\": \"string\"\n    }\n  ]\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        4464,
+        1072
+      ],
+      "id": "e4c0c6a7-a092-45e1-b69b-59fd654a60fe",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.output }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "Você é um organizador de mensagens para envio no WhatsApp.  \nSua função é **quebrar mensagens longas em blocos menores**, respeitando regras específicas para manter o fluxo natural da conversa da assistente virtual Nex (da NEXA).  \n\n⚙️ Regras obrigatórias:\n\n1️⃣ **Separar perguntas sempre em blocos isolados.**  \n   - Sempre que houver uma pergunta (frases com “?”), essa frase deve ficar **sozinha em um novo bloco**.  \n   - Exemplo:  \n     Entrada: “Boa noite! Me chamo Nex, a IA da NEXAIMOB.AI. 😊 Qual é o seu nome?”  \n     Saída:  \n     BLOCO 1 → “Boa noite! Me chamo Nex, a IA da NEXAIMOB.AI. 😊”  \n     BLOCO 2 → “Qual é o seu nome?”\n\n2️⃣ **Não junte perguntas com outras frases.**  \n   - Mesmo que pareça natural, a pergunta deve sempre estar isolada.\n\n3️⃣ **Fichas de agendamento ou informações com múltiplas linhas devem ficar em um único bloco.**  \n   - Nunca divida informações que pertencem ao mesmo contexto, como uma confirmação de reunião, ficha de imóvel, veículo ou contato.  \n   - Exemplo:  \n     Entrada:  \n     7️⃣ CONFIRMAÇÃO:  \n     Reunião confirmada, {{nome}}! 😊  \n     📅 Data: {{data}}  \n     🕒 Horário: {{horário}}  \n     🏢 Negócio: {{negocio}}  \n     O CEO Álvaro vai entrar em contato antes pra confirmar tudo certinho. Combinado? 🤝  \n     \n     Saída:  \n     BLOCO 1 →  \n     7️⃣ CONFIRMAÇÃO:  \n     Reunião confirmada, {{nome}}! 😊  \n     📅 Data: {{data}}  \n     🕒 Horário: {{horário}}  \n     🏢 Negócio: {{negocio}}  \n     \n     BLOCO 2 →  \n     O CEO Álvaro vai entrar em contato antes pra confirmar tudo certinho. Combinado? 🤝\n\n4️⃣ **Mantenha a ordem original das frases.**  \n   - Nunca reordene, resuma ou modifique o conteúdo.\n\n5️⃣ **Não adicione textos extras nem explicações.**  \n   - Retorne apenas a lista de blocos prontos para envio sequencial no WhatsApp.\n\n🎯 Objetivo final:  \nTransformar qualquer texto recebido em blocos de mensagem, seguindo as regras acima, para que cada parte seja enviada separadamente de forma fluida e natural ao cliente.\n"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        4320,
+        848
+      ],
+      "id": "f59eeb24-5a73-4cb6-953e-189071bcf695",
+      "name": "QUEBRADOR DE MSG EM BLOCOS"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "SEU_CALENDARIO@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Imobiliaria Agendamentos"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $fromAI('After', `voce deve consultar horario e o dia que o cliente informou para saber se tem disponibilidade ou não.`, 'string') }}",
+        "timeMax": "={{ $fromAI('Before', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        3744,
+        1216
+      ],
+      "id": "7ec75b22-dfc6-4c98-a2ff-9c151bd2d1a4",
+      "name": "consultar_agendamentos",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "",
+          "name": "api abraao"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "SEU_ID",
+          "mode": "list",
+          "cachedResultName": "Leads_Trafego"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Página1"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "phone_number",
+              "lookupValue": "={{ $('ORGANIZA DADOS').item.json.Telefone }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        3888,
+        1216
+      ],
+      "id": "f917c7db-0cf6-4c26-93ff-06010e77f009",
+      "name": "nomedolead",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        3248,
+        1200
+      ],
+      "id": "4f4116c0-404e-4508-86dc-090f6c016b5a",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "joao",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        208,
+        592
+      ],
+      "id": "a2ebb900-4ceb-4671-9b5f-f4546d145082",
+      "name": "RECEBER WHATSAPP",
+      "webhookId": "33c2e995-cb7f-4ee2-85cc-cb03358cb138"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        672,
+        464
+      ],
+      "id": "036f9c3d-5d2a-4c09-b9f9-0a96e4f67be7",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c11db4c7-2db0-4432-a968-334fca1b3914",
+              "name": "Telefone",
+              "value": "={{ $json.body.message.chatid }}",
+              "type": "string"
+            },
+            {
+              "id": "a62a32b5-143b-4dbb-90bf-02b48cb812c9",
+              "name": "instancia",
+              "value": "={{ $json.body.instanceName }}",
+              "type": "string"
+            },
+            {
+              "id": "e1c9acce-aee6-45f4-87de-d8b26333355a",
+              "name": "FromME",
+              "value": "={{ $json.body.message.fromMe }}",
+              "type": "string"
+            },
+            {
+              "id": "861e20ac-502d-4543-96ab-2efd4fbec8f0",
+              "name": "ID MSG",
+              "value": "={{ $json.body.message.messageid }}",
+              "type": "string"
+            },
+            {
+              "id": "11e5c798-b567-4f0e-9783-6fbca537e0b4",
+              "name": "Baseurl",
+              "value": "={{ $json.body.BaseUrl }}",
+              "type": "string"
+            },
+            {
+              "id": "1ae0c8a0-f1c6-4079-aab2-2c4a1786fb4e",
+              "name": "token",
+              "value": "={{ $env.UAZAPI_TOKEN }}",
+              "type": "string"
+            },
+            {
+              "id": "6659f335-38b7-4022-8335-d4b523a325d3",
+              "name": "msg texto",
+              "value": "={{ $item(\"0\").$node[\"RECEBER WHATSAPP\"].json[\"body\"][\"chat\"][\"wa_lastMessageTextVote\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "f2c14f86-c2d7-4fe7-afed-e33baf5b9f20",
+              "name": "msg audio",
+              "value": "={{ $json.body.message.content.URL }}",
+              "type": "string"
+            },
+            {
+              "id": "41528c63-9e5e-4f6c-92db-04a840f33bb6",
+              "name": "Name",
+              "value": "={{ $json.body.message.senderName }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        608
+      ],
+      "id": "23f77881-5f74-45fb-85c4-86f5342dc571",
+      "name": "ORGANIZA DADOS"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "SEU_ID",
+          "mode": "list",
+          "cachedResultName": "Pausados_IA"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Página1"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Telefone": "={{ $('ORGANIZA DADOS').item.json.Telefone }}",
+            "Nome": "={{ $('ORGANIZA DADOS').item.json.Name }}",
+            "Pausados": "sim"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Nome",
+              "displayName": "Nome",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Telefone",
+              "displayName": "Telefone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Pausados",
+              "displayName": "Pausados",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1328,
+        480
+      ],
+      "id": "5382de63-2e4b-48e5-8821-1f0923337a60",
+      "name": "PAUSAR ATENDIMENTO",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "SEU_ID",
+          "mode": "list",
+          "cachedResultName": "Pausados_IA"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Página1"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Telefone",
+              "lookupValue": "={{ $json.Telefone }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1120,
+        656
+      ],
+      "id": "0e2cf76f-9f6d-4b6b-9b89-046fb1b91ace",
+      "name": "VERIFICAR SE TÁ PAUSADO",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('ORGANIZA DADOS').item.json['msg texto'] }}",
+                    "rightValue": "texto",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEmpty",
+                      "singleValue": true
+                    },
+                    "id": "bf6e4888-dd4e-4df5-9339-7b8c1d9afd41"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Texto"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "f29e0d75-ff4a-4a26-85a5-45dc65d25303",
+                    "leftValue": "={{ $('ORGANIZA DADOS').item.json['msg audio'] }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEmpty",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Áudio"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "384513b1-6ff0-4194-aadd-70bc54408868",
+                    "leftValue": "={{ $('RECEBER WHATSAPP').item.json.body.data.message.imageMessage.mimetype }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Imagem"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1568,
+        768
+      ],
+      "id": "c5226450-1779-4269-9891-266c29c1003c",
+      "name": "IDENTIFICAR TIPO DE MENSAGEM"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "60e48802-4440-4146-807a-99fb108bd91c",
+              "leftValue": "={{ $json.FromME }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        864,
+        608
+      ],
+      "id": "df24aeea-e19b-4685-8328-d377e8a14877",
+      "name": "VERIFICAR SE É HUMANO"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8d842047-8b83-4c2d-bfcc-4875d3f0c60f",
+              "leftValue": "={{ $json.body.chat.wa_isGroup }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "be51aefe-bc08-41e2-9432-ccdc8aede82b",
+              "leftValue": "={{ $json.body.message.messageType }}",
+              "rightValue": "ReactionMessage",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "ddd9db03-a740-40ea-9a9c-3f71cba70c51",
+              "leftValue": "={{ \n  typeof $json.body?.message?.text === 'string'\n  && $json.body.message.text.trim() !== ''\n  && $json.body.message.text.replace(/\\p{Emoji}/gu, '').trim() === ''\n}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        416,
+        592
+      ],
+      "id": "add1fb0a-d156-48b0-8f15-119f3ae1ce25",
+      "name": "VERIFICAR SE É GRUPO"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "SEU_ID",
+          "mode": "list",
+          "cachedResultName": "Pausados_IA"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Página1"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Telefone",
+              "lookupValue": "={{ $('ORGANIZA DADOS').item.json.Telefone }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1248,
+        288
+      ],
+      "id": "b8599492-34dc-438e-b89f-19b6f89e6f0a",
+      "name": "VERIFICA SE TÁ PAUSADO",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1568,
+        576
+      ],
+      "id": "bf6459a2-584d-4da2-94fb-7ff168bcb4cc",
+      "name": "No Operation, do nothing2"
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "binaryPropertyName": "data2",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        2688,
+        912
+      ],
+      "id": "a10d3958-63b7-4201-a10c-f31734bdf638",
+      "name": "Transcrever áudio",
+      "credentials": {
+        "openAiApi": {
+          "id": "",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "text": "If the image is a document, extract and summarize its relevant information (titles, dates, names, numbers, and key details) in a structured format.\nIf the image is a car, identify the brand, model, color, and any visible distinctive features in a short and direct sentence. Example: \"White Ford Ka sedan, 2019 model.\"\nBe concise and accurate, without adding assumptions or unnecessary details.",
+        "inputType": "base64",
+        "binaryPropertyName": "data2",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        2688,
+        1104
+      ],
+      "id": "2beb7ae5-8f74-4909-a717-de38bbf631c3",
+      "name": "Descrever imagem",
+      "credentials": {
+        "openAiApi": {
+          "id": "",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "{{ $env.UAZAPI_BASE_URL }}/send/text",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "token",
+              "value": "={{ $env.UAZAPI_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $('ORGANIZA DADOS').item.json.Telefone }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json['output.blocos'].texto }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5568,
+        864
+      ],
+      "id": "8a991424-74dd-442c-9ea7-6eb404c71101",
+      "name": "HTTP Request2"
+    },
+    {
+      "parameters": {
+        "operation": "push",
+        "list": "={{ $json.codigowhats }}",
+        "messageData": "={{ $json.mensagem }}",
+        "tail": true
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2016,
+        736
+      ],
+      "id": "efd7abd0-1274-47e5-ba23-fc735557c3a0",
+      "name": "Redis1",
+      "credentials": {
+        "redis": {
+          "id": "",
+          "name": "Redis"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "0e8cc2aa-fdd7-4c76-99e6-7496a3d1f2c9",
+              "leftValue": "={{ $json.Telefone }}",
+              "rightValue": "={{ $json.Telefone }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "fe3cf7e8-0d1c-4bdf-9136-7ab489315f69",
+              "leftValue": "={{ $json.Pausados }}",
+              "rightValue": "sim",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1328,
+        656
+      ],
+      "id": "988b111b-9bda-4019-a679-6aa962ef6722",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=data_atual:\nhoje é: {{ $now.weekdayLong }}, data de hoje: {{ $now.format('dd/MM/yyyy') }}, hora: {{ $now.hour.toString().padStart(2, '0') }}:{{ $now.minute.toString().padStart(2, '0') }}\n\nsaudacao:\n{{ (() => { const h = $now.hour; if(h < 12) return 'Bom dia'; if(h < 18) return 'Boa tarde'; return 'Boa noite'; })() }}\n\nMENSAGEM DO CLIENTE:{{ $('ORGANIZA DADOS').item.json['msg texto'] }} {{ $json.text }}",
+        "options": {
+          "systemMessage": "=# =========================================\n# IDENTIDADE DO AGENTE\n# =========================================\n\nVocê é o assistente de pré-vendas da Imobiliária Exemplo, assistente de pré-vendas da Imobiliária Exemplo,\nempresa especializada em automação de atendimento com Inteligência Artificial\npara corretores e imobiliárias.\n\nSua função é conduzir leads que JÁ preencheram formulário\ndiretamente para o agendamento de uma reunião estratégica.\n\nO lead JÁ está identificado no sistema.\nVocê NÃO coleta dados pessoais.\nVocê NÃO inventa informações.\n\n# =========================================\n# 🎯 PERSONALIDADE\n# =========================================\n\n- Humanizado, simpático e profissional\n- Linguagem natural, direta e objetiva\n- Tom leve e acolhedor\n- Mensagens curtas\n- Sempre proativo\n- Conduz o fluxo\n\nREGRAS:\n- NÃO usar emojis\n- NÃO usar apelidos\n- NÃO chamar o cliente pelo nome\n- NÃO perguntar o nome\n\n# =========================================\n# 🚫 DADOS PESSOAIS (PROIBIDO)\n# =========================================\n\nNunca perguntar:\nnome, telefone, email, empresa, cargo, cidade, segmento.\n\nVocê só pode perguntar:\ndia e horário da reunião.\n\n# =========================================\n# 🕒 CONTEXTO DE TEMPO\n# =========================================\n\nHoje: {{ $now.weekdayLong }}\nData: {{ $now.format('dd/MM/yyyy') }}\nHora: {{ $now.format('HH:mm') }}\nFuso: America/Sao_Paulo\n\n# =========================================\n# ⏰ HORÁRIO DE FUNCIONAMENTO (REGRA FIXA)\n# =========================================\n\nReuniões podem ser agendadas SOMENTE entre:\n08:00 e 21:00 (horário de Brasília)\n\nSe o cliente informar horário fora desse intervalo:\n- Informar educadamente o horário de funcionamento\n- Pedir novo horário dentro do período\n- NÃO chamar tools\n- NÃO avançar no fluxo\n\n# =========================================\n# ⛔ REGRA DE AGENDAMENTO IMEDIATO (CRÍTICA)\n# =========================================\n\nÉ PROIBIDO agendar reuniões para o horário atual ou imediato.\n\nConsidere como pedido de \"AGORA\" qualquer mensagem como:\n- \"agora\"\n- \"agora mesmo\"\n- \"neste momento\"\n- \"o quanto antes\"\n- \"pode ser agora?\"\n- \"tem como agora?\"\n\nREGRAS OBRIGATÓRIAS:\n\n1. Nunca considere \"agora\" como um horário válido.\n2. Nunca chame tools para o horário atual ({{ $now }}).\n3. O menor horário permitido é:\n   → {{ $now }} + 1 hora\n\n4. Se o cliente pedir reunião \"agora\":\n   - Informe educadamente que não é possível neste momento\n   - Sugira automaticamente um horário a partir de 1 hora depois\n\nModelo de resposta:\n\n\"Agora não consigo no momento, mas podemos agendar para (o próximo horário cheio válido conforme a regra de arredondamento). Funciona para você?\"\n\n5. Se o cliente aceitar:\n   - Prosseguir normalmente com verificação de disponibilidade\n6. Se o cliente não aceitar:\n   - Pedir outro horário dentro do período permitido\n\n# =========================================\n# ⏱️ REGRA CRÍTICA DE ARREDONDAMENTO DE HORÁRIO (OBRIGATÓRIA)\n# =========================================\n\nSempre que o agente calcular um novo horário baseado em {{ $now }}:\n\n1. Some 1 hora ao horário atual\n2. Em seguida ARREDONDE PARA A PRÓXIMA HORA CHEIA\n\nREGRAS ABSOLUTAS:\n\n- Minutos devem ser sempre \"00\"\n- É PROIBIDO sugerir horários quebrados (ex: 20:18, 20:37, 20:59)\n\nLÓGICA OBRIGATÓRIA:\n\nNovo horário sugerido = próxima hora cheia após ({{ $now }} + 1 hora)\n\nEXEMPLOS (SEMPRE SEGUIR):\n\nAgora 19:01 → sugerir 20:00  \nAgora 19:21 → sugerir 20:00  \nAgora 19:45 → sugerir 21:00  \nAgora 19:58 → sugerir 21:00  \nAgora 20:10 → sugerir 21:00  \n\nSe o horário arredondado ultrapassar 21:00:\n→ sugerir o próximo dia às 08:00\n\nO agente NUNCA deve usar {{ $now.plus({ hours: 1 }) }} diretamente para responder o cliente.\nSempre usar o horário já arredondado para a próxima hora cheia.\n\n# =========================================\n# 💬 SAUDAÇÃO INTELIGENTE\n# =========================================\n\nRegras de uso de cumprimento:\n\n- <12:00 → \"Bom dia\"\n- 12:00–17:59 → \"Boa tarde\"\n- ≥18:00 → \"Boa noite\"\n\nSe o cliente NÃO informar horário, usar a hora atual do sistema.\n\n\n# =========================================\n# 🚨 REGRA DE CONTINUIDADE (CRÍTICA)\n# =========================================\n\nAntes de responder, você DEVE analisar o contexto imediato da conversa.\n\n1. Se a sua mensagem anterior foi uma PERGUNTA\n   (ex: pedido de data, horário, confirmação ou escolha),\n   então a resposta do cliente é uma CONTINUAÇÃO direta da conversa.\n\n2. Em mensagens de CONTINUAÇÃO:\n   - É PROIBIDO usar qualquer cumprimento\n   - NÃO dizer bom dia, boa tarde ou boa noite\n   - NÃO reiniciar a conversa\n   - NÃO se apresentar novamente\n   - Vá direto à confirmação ou próxima ação\n\n3. Cumprimentos só podem ser usados quando:\n   - Você estiver iniciando um novo atendimento\n   - OU retomando conversa sem pergunta anterior imediata\n\n4. Nunca cumprimente duas vezes dentro do mesmo fluxo contínuo.\n\n5. Nunca explique essas regras ao cliente.\n\n# =========================================\n# 💬 MENSAGEM INICIAL\n# =========================================\n\n(SOMENTE quando estiver iniciando o atendimento)\n\n\nAqui é o assistente de pré-vendas da Imobiliária Exemplo.\n\nJá recebemos seu formulário e vamos agendar sua sessão estratégica com nosso time.\nQual dia e horário você prefere para a reunião online?\n# =========================================\n# 💰 REGRA SOBRE PREÇO / VALOR / INVESTIMENTO\n# =========================================\n\nEste agente NÃO informa valores fixos, preços fechados ou estimativas.\n\nQuando o cliente perguntar sobre preço, custo ou investimento, como por exemplo:\n- \"quanto custa?\"\n- \"qual o valor?\"\n- \"preço do serviço\"\n- \"valores\"\n- \"custo\"\n- \"qual o investimento?\"\n- \"valor para autônomo\"\n- \"quanto se paga pelo serviço?\"\n\nREGRAS OBRIGATÓRIAS:\n\n1. Nunca informar números, valores ou faixas de preço.\n2. Nunca dizer que é caro ou barato.\n3. Explicar que o valor NÃO é padrão.\n4. Informar que o investimento depende do escopo.\n5. Conduzir imediatamente para a reunião.\n\nResposta OBRIGATÓRIA:\n\n\"O valor do investimento não é padrão, porque ele depende do número de fluxos,\ndo grau de personalização e das integrações com sistemas externos,\ncomo CRM, portais imobiliários e agenda.\n\nPara passar um valor correto, preciso entender esse cenário primeiro.\nPra isso, podemos agendar nossa sessão estratégica para alinhar o escopo\ne falar de valores com precisão.\n\nQue data e horário fica melhor pra você?\"\n\n# =========================================\n# 🧠 REGRA DE EXPLICAÇÃO DO PROJETO (PRÉ-VENDAS)\n# =========================================\n\nEste agente NÃO é responsável por explicar detalhes técnicos do projeto.\n\nQuando o cliente pedir explicações como:\n- \"como funciona?\"\n- \"quero saber mais\"\n- \"me explica melhor\"\n- \"o que essa IA faz?\"\n- \"como é esse projeto?\"\n\nREGRAS OBRIGATÓRIAS:\n\n1. Fornecer uma explicação CURTA e ESTRATÉGICA, sem detalhes técnicos.\n2. NÃO explicar integrações, fluxos, preços ou funcionamento interno.\n3. NÃO tentar convencer com argumentos longos.\n4. SEMPRE conduzir imediatamente para o agendamento da reunião.\n\nModelo de resposta base:\n\n\"Funciona assim: é um agente de IA que faz o primeiro atendimento dos seus clientes,\nresponde automaticamente sobre imóveis e organiza os leads para você.\nA configuração varia conforme cada imobiliária, por isso explicamos tudo na reunião.\"\n\nEm seguida, obrigatoriamente:\n\"Qual dia e horário você prefere para conversarmos melhor?\"\n\n\n# =========================================\n# 🧠 INTERPRETAÇÃO INTELIGENTE DE DATA E HORA\n# =========================================\n\nO cliente pode informar data e horário de forma direta ou informal.\n\nExemplos válidos:\n- \"amanhã às 16\"\n- \"amanhã 16h\"\n- \"dia 02/02 às 16:00\"\n- \"pode ser amanhã às 4 da tarde?\"\n- \"amanhã no fim da tarde\"\n- \"amanhã às 16 certo?\"\n\nREGRA:\nSe o cliente informar DATA e HORÁRIO na mesma mensagem:\n- NÃO repetir a pergunta\n- NÃO pedir novamente data ou horário\n- Avançar direto para verificação de disponibilidade\n\nSe informar apenas DATA ou apenas HORÁRIO:\n- Perguntar SOMENTE o dado que falta\n\n# =========================================\n# 🧠 CONVERSÕES DE HORÁRIO\n# =========================================\n\nmanhã → 09:00  \ntarde → 15:00  \nfim da tarde → 16:00  \nnoite → 18:00  \n\nFormato interno:\n- data: YYYY-MM-DD\n- hora: HH:mm\n\n# =========================================\n# 📆 DIA DA SEMANA (AUTO CÁLCULO)\n# =========================================\n\nSe o cliente disser:\n\"segunda\", \"terça\", \"próxima quinta\", etc.\n\n→ calcular a próxima ocorrência futura usando {{ $now }}\n→ nunca usar hoje\n→ gerar data interna YYYY-MM-DD\n\n# =========================================\n# 📆 DATA EXPLÍCITA\n# =========================================\n\nSe o cliente informar data concreta:\n→ converter para YYYY-MM-DD sem alterar o sentido\n\n# =========================================\n# ⛔ VALIDAÇÃO DE HORÁRIO\n# =========================================\n\nSomente é válido se:\n08:00 ≤ horaSelecionada ≤ 21:00\n\nSe inválido, responder:\n\"Atendemos das 08:00 às 21:00. Pode informar um horário dentro desse período?\"\n\n# =========================================\n# ⏱️ DURAÇÃO FIXA DA REUNIÃO (CRÍTICA)\n# =========================================\n\nTodas as reuniões têm duração FIXA de 1 hora (60 minutos).\n\nREGRAS OBRIGATÓRIAS:\n\n1. Nunca agendar reuniões com duração menor que 1 hora.\n2. Nunca agendar reuniões de 30 minutos.\n3. O horário informado pelo cliente representa o INÍCIO da reunião.\n4. O horário de TÉRMINO deve ser sempre:\n   → horário_inicial + 1 hora\n\nExemplo:\n- Cliente: 15:00\n- Início: 15:00\n- Fim: 16:00\n\nEssa regra é absoluta e não pode ser alterada.\n\n# =========================================\n# 🚨 REGRA CRÍTICA DE DISPONIBILIDADE (BLOQUEIO)\n# =========================================\n\nÉ PROIBIDO afirmar ou sugerir que um horário está disponível\nantes de consultar a agenda.\n\nREGRAS ABSOLUTAS:\n\n1. Nunca dizer frases como:\n   - \"funciona sim\"\n   - \"está disponível\"\n   - \"perfeito esse horário\"\n   - \"podemos confirmar\"\n\nANTES da consulta de disponibilidade.\n\n2. Sempre que o cliente informar DATA e HORÁRIO válidos:\n   - NÃO responder ao cliente imediatamente\n   - PRIMEIRO chamar a tool de consulta de disponibilidade\n\n3. A disponibilidade de um horário\nSÓ EXISTE após o retorno da tool.\n\n4. Qualquer confirmação verbal\nANTES da tool é PROIBIDA.\n\n# =========================================\n# 🗓️ CONSULTA DE DISPONIBILIDADE\n# =========================================\n\nChamar tool: consultar_agendamentos\n\nParâmetros:\n- dataSelecionada → YYYY-MM-DD\n- horaSelecionada → HH:mm\n\nResultado:\n- 0 ou 1 evento → horário disponível\n- 2 eventos → horário cheio\n\n# =========================================\n# ✅ CONFIRMAÇÃO (ÚNICA)\n# =========================================\n\nEste bloco só pode ser usado\nAPÓS a consulta de disponibilidade.\n\nSe o retorno da tool indicar horário DISPONÍVEL:\nResponder:\n\n\"Consultei aqui e esse horário está disponível.\n{{data_formatada}} às {{horario}}.\nPosso confirmar?\"\n\n⚠️ É PROIBIDO usar este bloco sem ter chamado a tool antes.\n\n# =========================================\n# 📌 CRIAÇÃO DO AGENDAMENTO\n# =========================================\n\nChamar tool: criar_agendamento\n\nDepois chamar, obrigatoriamente:\n1. notificacao_equipe\n2. notificacao_grupo_equipe\n\nSomente após as notificações, responder ao cliente:\n\n\"Reunião confirmada.\nData: {{data_formatada}}\nHorário: {{horario}}\n\nTá combinado! Vou te enviar o link do nosso compromisso pouco antes da reunião.\"\n\n# =========================================\n# 📣 NOTIFICAÇÃO PARA EQUIPE (OBRIGATÓRIA)\n# =========================================\n\nSempre que uma reunião for CONFIRMADA com sucesso\n(após a chamada da tool criar_agendamento),\no agente DEVE chamar a tool: notificacao_equipe.\n\nO conteúdo da notificação DEVE seguir EXATAMENTE este formato:\n\n\"Reunião Confirmada!\n👨‍💻 Cliente: {{ $('ORGANIZA DADOS').item.json.Name }}\n📆 Data: data e horario que o cliente agendou a reuniao\n📞 Telefone: {{ $('ORGANIZA DADOS').item.json.Telefone }}\"\n\nREGRAS OBRIGATÓRIAS:\n\n1. A tool notificacao_equipe só pode ser chamada:\n   - APÓS a criação do agendamento\n   - NUNCA antes\n\n2. A data enviada deve ser:\n   - A data FINAL escolhida pelo cliente\n   - Já formatada para leitura humana (ex: 04/02/2026)\n\n3. Nunca alterar emojis, texto ou estrutura da mensagem.\n4. Nunca adicionar informações extras.\n5. Nunca enviar notificação se o agendamento NÃO foi confirmado.\n\n\n# =========================================\n# 🔴 HORÁRIO CHEIO\n# =========================================\n\nSe horário cheio:\n\"Esse horário já está ocupado. Pode me passar outro dentro do período das 08:00 às 21:00?\"\n\n# =========================================\n# 🤖 SE PERGUNTAREM SE É IA\n# =========================================\n\nResponder:\n\"Boa pergunta… muita gente acha que é, outros acham que não.\nO melhor é conversar com o time na reunião que eles explicam direitinho.\"\n\nEm seguida:\n\"Qual dia e horário prefere?\"\n\n# =========================================\n# 🔒 REGRA FINAL\n# =========================================\n\n- Nunca confirmar sem tool\n- Nunca simular agenda\n- Nunca inventar disponibilidade\n- Nunca avançar etapas fora da ordem\n\n# =========================================\n# 🚫 LIMPEZA DE MENSAGEM\n# =========================================\n\nNunca exibir ao cliente:\nRESPOSTA PARA O CLIENTE\nAÇÃO\nTOOL\nSISTEMA\nINSTRUÇÃO\nETAPA\n\nSomente conversa natural.\n# =========================================\n# 🔐 REGRA DE ESTADO DE CONFIRMAÇÃO (CRÍTICA)\n# =========================================\n\nQuando o agente fizer a pergunta:\n\"Posso confirmar?\"\n\nisso significa que:\n- A data já foi definida\n- O horário já foi definido\n- A disponibilidade JÁ FOI consultada\n- O horário JÁ FOI considerado disponível\n\nREGRAS ABSOLUTAS:\n\n1. Se o cliente responder algo positivo como:\n   - \"sim\"\n   - \"pode confirmar\"\n   - \"confirmado\"\n   - \"ok\"\n   - \"isso\"\n   - \"pode ser\"\n\n2. O agente DEVE:\n   - NÃO consultar a agenda novamente\n   - NÃO perguntar nada\n   - NÃO validar novamente horário ou data\n   - NÃO repetir a frase \"posso confirmar?\"\n\n3. A ação OBRIGATÓRIA é:\n   → chamar imediatamente a tool criar_agendamento\n\n4. Após criar_agendamento:\n   → chamar notificacao_equipe\n   → chamar notificacao_grupo_equipe\n   → responder ao cliente com a confirmação final\n\n5. Qualquer nova consulta de disponibilidade\nAPÓS o cliente dizer \"sim\"\né PROIBIDA.\n\n# =========================================\n# ⛔ REGRA FINAL DE BLOQUEIO POR HORA\n# =========================================\n\nÉ permitido apenas 1 reunião por hora.\n\nSe existir qualquer evento dentro do intervalo de 1 hora\na partir do horário solicitado, o horário deve ser considerado OCUPADO.\n\nNunca sugerir horários quebrados (ex: 15:30, 15:45) se a hora já estiver ocupada.\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        3552,
+        848
+      ],
+      "id": "6fd1b409-e035-4da2-ab1e-1629b24aa684",
+      "name": "Imobiliaria",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Se a data foi derivada de dia da semana:\n- Conferir se o dia da semana da data final\n  corresponde exatamente ao dia informado pelo cliente\n- Se não corresponder → NÃO agendar",
+        "calendar": {
+          "__rl": true,
+          "value": "SEU_CALENDARIO@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Imobiliaria Agendamentos"
+        },
+        "start": "={{ $fromAI('Start', 'YYYY-MM-DDTHH:mm:ss', 'string') }}",
+        "end": "={{ $fromAI('End', 'YYYY-MM-DDTHH:mm:ss', 'string') }}",
+        "additionalFields": {
+          "attendees": [],
+          "description": "={{ $json.whats }}",
+          "summary": "={{ $('ORGANIZA DADOS').item.json.Name }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        3584,
+        1216
+      ],
+      "id": "430958f5-dd91-4980-9b9b-184f2196a340",
+      "name": "criar_agendamento",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "",
+          "name": "api abraao"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "{{ $env.UAZAPI_BASE_URL }}/send/text",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "token",
+              "value": "={{ $env.UAZAPI_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "ID_DO_GRUPO@g.us"
+            },
+            {
+              "name": "text",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters1_Value', `Nova reunião agendada\n\nLead: Nome da pessoa\nWhatsApp: Numero de telefone\nData: Data reuniao\nHorário: Horario reuniao\nOrigem: formulário Imobiliária Exemplo\n`, 'string') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        4048,
+        1216
+      ],
+      "id": "b75aa545-7394-4e96-94b5-facd366d7bf8",
+      "name": "notificacao_equipe"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('ORGANIZA DADOS').item.json.Telefone }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+      "typeVersion": 1.5,
+      "position": [
+        3424,
+        1216
+      ],
+      "id": "a50db0df-6e43-488a-be6d-143ec886b4f4",
+      "name": "Redis Chat Memory",
+      "credentials": {
+        "redis": {
+          "id": "",
+          "name": "Redis"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "={{ $json.mensagens }}",
+              "renameField": true,
+              "outputFieldName": "texto"
+            },
+            {
+              "fieldToAggregate": "={{ $json.text }}",
+              "renameField": true,
+              "outputFieldName": "audio"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        3280,
+        448
+      ],
+      "id": "336a2326-de9a-4fcb-958e-0eeb57625816",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.mensagens }}",
+                    "rightValue": "texto",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEmpty",
+                      "singleValue": true
+                    },
+                    "id": "bf6e4888-dd4e-4df5-9339-7b8c1d9afd41"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Texto"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "f29e0d75-ff4a-4a26-85a5-45dc65d25303",
+                    "leftValue": "={{ $('VERIFICAR SE É HUMANO').item.json.body.audio.audioUrl }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEmpty",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Áudio"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        3248,
+        656
+      ],
+      "id": "3143ff4b-59ef-46cc-a2e4-05dbabe19e51",
+      "name": "Tipo de msg"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "={{ $json.whats }}"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        3056,
+        656
+      ],
+      "id": "dcd88360-ae0f-4aa5-9291-f1efad3b85dc",
+      "name": "Redis3",
+      "credentials": {
+        "redis": {
+          "id": "",
+          "name": "Redis"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Redis1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Redis2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis2": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Redis3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sort": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Sort",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PAUSAR/ATIVAR": {
+      "main": [
+        [
+          {
+            "node": "VERIFICA SE TÁ PAUSADO",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "PAUSAR ATENDIMENTO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Base",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Base": {
+      "main": [
+        [
+          {
+            "node": "Convert to File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File1": {
+      "main": [
+        [
+          {
+            "node": "Transcrever áudio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Base1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Base1": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Descrever imagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields4": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If3": {
+      "main": [
+        [],
+        [
+          {
+            "node": "QUEBRADOR DE MSG EM BLOCOS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "QUEBRADOR DE MSG EM BLOCOS",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "QUEBRADOR DE MSG EM BLOCOS",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "QUEBRADOR DE MSG EM BLOCOS": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "consultar_agendamentos": {
+      "ai_tool": [
+        [
+          {
+            "node": "Imobiliaria",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "nomedolead": {
+      "ai_tool": [
+        [
+          {
+            "node": "Imobiliaria",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Imobiliaria",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RECEBER WHATSAPP": {
+      "main": [
+        [
+          {
+            "node": "VERIFICAR SE É GRUPO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ORGANIZA DADOS": {
+      "main": [
+        [
+          {
+            "node": "VERIFICAR SE É HUMANO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VERIFICAR SE TÁ PAUSADO": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IDENTIFICAR TIPO DE MENSAGEM": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VERIFICAR SE É HUMANO": {
+      "main": [
+        [
+          {
+            "node": "PAUSAR/ATIVAR",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "VERIFICAR SE TÁ PAUSADO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VERIFICAR SE É GRUPO": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ORGANIZA DADOS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VERIFICA SE TÁ PAUSADO": {
+      "main": [
+        [
+          {
+            "node": "DELETAR PAUSADO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcrever áudio": {
+      "main": [
+        [
+          {
+            "node": "Imobiliaria",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Descrever imagem": {
+      "main": [
+        []
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis1": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IDENTIFICAR TIPO DE MENSAGEM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "criar_agendamento": {
+      "ai_tool": [
+        [
+          {
+            "node": "Imobiliaria",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "notificacao_equipe": {
+      "ai_tool": [
+        [
+          {
+            "node": "Imobiliaria",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Imobiliaria",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        []
+      ]
+    },
+    "Tipo de msg": {
+      "main": [
+        [
+          {
+            "node": "Imobiliaria",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Redis3": {
+      "main": [
+        [
+          {
+            "node": "Tipo de msg",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Imobiliaria": {
+      "main": [
+        [
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "name": "SDR de pré-vendas com agendamento"
+}

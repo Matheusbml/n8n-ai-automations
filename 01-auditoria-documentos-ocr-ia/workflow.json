@@ -1,0 +1,1088 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json }}",
+        "options": {
+          "systemMessage": "=Você é um AUDITOR ESPECIALIZADO em documentos TRABALHISTAS, OCUPACIONAIS e DE SEGURANÇA.\n\nSua função é analisar um documento (texto_completo + dados_extraidos) e validá-lo EXCLUSIVAMENTE com base nos critérios oficiais obtidos pela ferramenta get_criterios.\n\n=======================================================================\n📌 AÇÃO OBRIGATÓRIA AO INICIAR\n=======================================================================\n\nSua primeira ação DEVE ser:\n\n{\n  \"tool\": \"get_criterios\",\n  \"toolInput\": {\n    \"tipo_documento\": \"{{ $json.tipo_documento }}\"\n  }\n}\n\nDepois de receber os critérios, você inicia a análise.\n\n=======================================================================\n📌 REGRAS FUNDAMENTAIS DO SEU COMPORTAMENTO\n=======================================================================\n\n1. Você DEVE obrigatoriamente usar os critérios retornados pela ferramenta get_criterios.\n2. Você NÃO pode inventar regras, supor requisitos, inferir dados ou imaginar informações.\n3. Você só pode analisar:\n   • texto_completo  \n   • dados_extraidos.campos  \n   • critérios retornados pelo Supabase  \n4. Você deve validar CADA critério individualmente.\n5. Você NÃO deve tentar classificar tipo de documento — o tipo_documento já foi identificado antes e é DEFINITIVO.\n6. O tipo_documento do JSON final deve ser SEMPRE exatamente o tipo_documento recebido do input ($json.tipo_documento).\n7. Você deve identificar para cada critério:\n   • presente  \n   • ausente (faltante)  \n   • inconsistente (diferente do OCR)  \n   • ilegível / incompleto  \n8. Não adicione nada que não esteja no PDF / OCR.\n\n=======================================================================\n📌 CÁLCULO DO SCORE (OBRIGATÓRIO)\n=======================================================================\n\n1. Total_critérios = quantidade total de critérios vindos do Supabase.\n2. Atendidos = quantidade de critérios plenamente atendidos.\n3. Score = (Atendidos / Total_critérios) * 100\n\nO score deve ser um número REAL entre 0 e 100.\n\n=======================================================================\n📌 DECISÃO FINAL (OBRIGATÓRIA)\n=======================================================================\n\nBaseada EXCLUSIVAMENTE no score:\n\n- score < 70     →  \"rejeitar\"\n- 70 ≤ score < 90 →  \"revisar\"\n- score ≥ 90      → \"aceitar\"\n\nEssas regras são absolutas.  \nVocê NÃO pode alterá-las.\n\n=======================================================================\n📌 COMO PRODUZIR A SAÍDA FINAL\n=======================================================================\n\nApós analisar os critérios:\n\n1. Liste no campo \"campos_faltantes\" todos os critérios ausentes.\n2. Liste no campo \"inconsistencias\" tudo que não bate com o OCR.\n3. \"motivo\" deve explicar claramente por que aceitou/rejeitou/revisar.\n4. \"prioridade\":\n   • alta → rejeitado  \n   • média → revisar  \n   • baixa → aceito  \n5. \"observacoes\" pode conter achados relevantes, mas SEM criar regras novas.\n\n=======================================================================\n📌 FORMATO FINAL OBRIGATÓRIO\n=======================================================================\n\nResponda SOMENTE com este JSON (sem texto fora do JSON):\n\n{\n  \"tipo_documento\": \"\",\n  \"score\": 0,\n  \"acao\": \"\",\n  \"prioridade\": \"\",\n  \"motivo\": \"\",\n  \"campos_faltantes\": [],\n  \"inconsistencias\": [],\n  \"observacoes\": \"\"\n}\n\nNÃO adicione campos.\nNÃO remova campos.\nNÃO explique nada fora do JSON.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        2336,
+        0
+      ],
+      "id": "9ef5a091-6709-408e-b5d1-e966656190b8",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2304,
+        176
+      ],
+      "id": "10828e11-a78b-460b-ad83-7327e347572a",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "criterios_documentais",
+        "limit": 100,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "tipo_documento",
+              "condition": "eq",
+              "keyValue": "={{ $json.tipo_documento }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        2480,
+        160
+      ],
+      "id": "e12ac4bb-b832-4199-a6a1-ead42d907f45",
+      "name": "get_criterios",
+      "credentials": {
+        "supabaseApi": {
+          "id": "",
+          "name": "supabaseApi"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "ETAPA 1 — Entrada do Documento\n- Aguarda novo arquivo no Google Drive\n- Lê metadados do arquivo (nome, ID, tipo)\n- Registra log da chegada do documento\n",
+        "height": 528,
+        "width": 544,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        912,
+        -208
+      ],
+      "id": "de39190f-d6b4-4fa8-8554-11afd14519a3",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "SEU_ID",
+          "mode": "list",
+          "cachedResultName": "Documentos Recebidos"
+        },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        960,
+        0
+      ],
+      "id": "b7219f34-d7fb-459d-b1d7-07154b95eaef",
+      "name": "Aguardar Novo Documento",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "",
+          "name": "Google Drive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a0e5792b-33b6-4f30-b336-c3214e6148b4",
+              "name": "file_id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "0bb30f07-5513-4268-af8a-3df2b5cd81ba",
+              "name": "file_type",
+              "value": "={{ $json.mimeType }}",
+              "type": "string"
+            },
+            {
+              "id": "f2b3431f-8426-4919-974c-e6311fe9a8e2",
+              "name": "file_title",
+              "value": "={{ $json.name }}",
+              "type": "string"
+            },
+            {
+              "id": "42f5f5b0-9afd-405a-86ef-16fa18e9c5ce",
+              "name": "file_url",
+              "value": "={{ $json.webViewLink }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "2dadae21-88a9-44d7-acf7-bbb1553395bb",
+      "name": "Separar Metadados do Arquivo"
+    },
+    {
+      "parameters": {
+        "tableId": "logs_documentos",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "file_id",
+              "fieldValue": "={{ $json.file_id }}"
+            },
+            {
+              "fieldId": "etapa",
+              "fieldValue": "entrada_documento"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "sucesso"
+            },
+            {
+              "fieldId": "detalhes",
+              "fieldValue": "={{ $json }}"
+            },
+            {
+              "fieldId": "erro",
+              "fieldValue": "="
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1296,
+        0
+      ],
+      "id": "19c36f3d-2e8c-4edc-bb18-c229064538cf",
+      "name": "Log – Entrada do Documento",
+      "credentials": {
+        "supabaseApi": {
+          "id": "",
+          "name": "supabaseApi"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.file_id }}",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {
+              "docsToFormat": "application/pdf"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1552,
+        0
+      ],
+      "id": "2c1bd759-78e7-4a83-bc86-1b958b292feb",
+      "name": "Baixar Arquivo do Drive",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "",
+          "name": "Google Drive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "document",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-pro",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-pro"
+        },
+        "text": "=Você é um sistema de OCR e extração de dados EXTREMAMENTE RIGOROSO.  \nSua tarefa é EXTRair (NUNCA inferir) e CLASSIFICAR o tipo de documento usando SOMENTE o texto fornecido em \"texto_completo\".\n\n⚠️ REGRAS CRÍTICAS\n- NÃO inferir nada. Use apenas texto literal.\n- Classifique tipo_documento APENAS com base nas expressões abaixo.\n- Se aparecer mais de uma categoria, escolha a mais específica.\n- Se nenhuma aparecer, retorne “Outro”.\n- Retorne APENAS um JSON válido.\n\n📌 MAPA DE CLASSIFICAÇÃO (valores EXACTOS existentes no banco)\n- \"NR06\" → “NR06”\n- \"Ficha de EPI\" → “Ficha de EPI”, “Treinamento EPI”, “Entrega de EPI”\n- \"ASO\" → “ASO”, “Atestado de Saúde Ocupacional”, “Atestado Ocupacional”\n- \"ASO Demissional\" → “ASO Demissional”, “Atestado Ocupacional Demissional”, “Atestado de Saúde Ocupacional Demissional”\n- \"NR10\" → “NR10”, “NR-10”, “NR 10”, “Eletricidade”\n- \"NR12\" → “NR12”, “NR-12”, “NR 12”, “Máquinas”, “Equipamentos”\n- \"NR18\" → “NR18”, “NR-18”, “NR 18”, “Construção Civil”\n- \"NR35\" → “NR35”, “NR-35”, “NR 35”, “Trabalho em Altura”\n- \"Ficha de Registro\" → “Ficha de Registro”\n- \"Contrato de Trabalho\" → “Contrato de Trabalho”\n- \"CTPS\" → “CTPS”, “Carteira de Trabalho”\n- \"Permissao de Trabalho\" → “Permissão de Trabalho”\n- \"Permissao de Trabalho a Quente\" → “Permissão de Trabalho a Quente”\n- \"LTCAT\" → “LTCAT”\n- \"PPP\" → “PPP”\n- \"AET\" → “AET”\n- \"PGR\" → “PGR”, “Programa de Gerenciamento de Riscos”\n- \"PCMSO\" → “PCMSO”\n- \"Ordem de Serviço\" → “Ordem de Serviço”, “OS”\n\n📌 EXTRAÇÃO DE CAMPOS\n- Campos aceitos: nome, CPF, data, validade, carga_horaria, nome_instrutor, registro_profissional, local.\n- Apenas valores literalmente encontrados.\n- Datas devem ser mantidas exatamente como aparecem.\n\n📌 FORMATO DE RESPOSTA\n{\n  \"tipo_documento\": \"\",\n  \"confianca_classificacao\": 0.0,\n  \"dados_extraidos\": {\n    \"campos\": {},\n    \"texto_resumido\": \"\",\n    \"texto_completo\": \"\"\n  }\n}\n\nAgora processe o texto fornecido em \"texto_completo\".\n",
+        "inputType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        1840,
+        0
+      ],
+      "id": "c39e64a6-a553-4383-a1b0-f4b4550c3d1d",
+      "name": "Executar OCR e Extrair Dados",
+      "retryOnFail": true,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "",
+          "name": "googlePalmApi"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// =======================================\n// 1. Capturar JSON retornado pelo Gemini\n// =======================================\n\nlet raw = $json.content?.parts?.[0]?.text || \"\";\n\n// Remover possíveis marcas de bloco markdown\nraw = raw\n  .replace(/```json/gi, \"\")\n  .replace(/```/g, \"\")\n  .trim();\n\n// =======================================\n// 2. Tentar localizar o JSON interno\n// =======================================\n\nconst match = raw.match(/\\{[\\s\\S]*\\}/);\n\nif (!match) {\n  return [{\n    json: {\n      error: \"Nenhum JSON encontrado em parts[0].text\",\n      raw\n    }\n  }];\n}\n\nlet parsed;\n\ntry {\n  parsed = JSON.parse(match[0]);\n} catch (e) {\n  return [{\n    json: {\n      error: \"Falha ao fazer parse do JSON\",\n      detalhe: e.message,\n      raw\n    }\n  }];\n}\n\n// =======================================\n// 3. Normalizar campos importantes\n// =======================================\n\nreturn [{\n  json: {\n    tipo_documento: parsed.tipo_documento || \"Outro\",\n    confianca_classificacao: parsed.confianca_classificacao || 0,\n    dados_extraidos: parsed.dados_extraidos || {},\n    texto_completo: parsed.dados_extraidos?.texto_completo || \"\",\n    texto_resumido: parsed.dados_extraidos?.texto_resumido || \"\",\n    parsed_original: parsed\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2048,
+        0
+      ],
+      "id": "a7c60290-ea4f-455b-a337-0951d2487bb4",
+      "name": "Normalizar Dados do OCR"
+    },
+    {
+      "parameters": {
+        "jsCode": "// =======================================\n// 1. Obter a saída bruta do agente\n// =======================================\nlet raw = $json.output || \"\";\n\n// Garantir que é string\nraw = String(raw).trim();\n\n// =======================================\n// 2. Tentar localizar o JSON dentro da resposta\n// =======================================\n\n// Remover espaços, blocos markdown e trechos indesejados\nraw = raw\n  .replace(/```json/gi, \"\")\n  .replace(/```/g, \"\")\n  .trim();\n\n// Expressão mais tolerante para capturar o JSON\nconst jsonMatch = raw.match(/\\{[\\s\\S]*\\}/);\n\nif (!jsonMatch) {\n  return [{\n    json: {\n      error: \"Nenhum JSON válido encontrado na resposta do agente.\",\n      raw_output: raw\n    }\n  }];\n}\n\nlet parsed;\n\ntry {\n  parsed = JSON.parse(jsonMatch[0]);\n} catch (err) {\n  return [{\n    json: {\n      error: \"Falha ao fazer parse do JSON.\",\n      detalhe: err.message,\n      raw_output: raw\n    }\n  }];\n}\n\n// =======================================\n// 3. Normalizar e garantir todos os campos\n// =======================================\n\nconst safeArray = (value) => Array.isArray(value) ? value : [];\nconst safeString = (value) => typeof value === \"string\" ? value : \"\";\nconst safeNumber = (value) => typeof value === \"number\" ? value : 0;\n\nconst output = {\n  tipo_documento: safeString(parsed.tipo_documento),\n  score: safeNumber(parsed.score),\n  acao: safeString(parsed.acao),\n  prioridade: safeString(parsed.prioridade),\n  motivo: safeString(parsed.motivo),\n  campos_faltantes: safeArray(parsed.campos_faltantes),\n  inconsistencias: safeArray(parsed.inconsistencias),\n  observacoes: safeString(parsed.observacoes),\n\n  // Mantém _raw para debug no n8n, mas não usado no banco\n  _raw: parsed\n};\n\n// =======================================\n// 4. Retornar tudo corretamente\n// =======================================\n\nreturn [{ json: output }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        0
+      ],
+      "id": "91809545-ff57-4188-a65b-91434268b8ce",
+      "name": "\"Normalizar Resultado da Auditoria"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7cc47413-659e-4a66-a0a9-f035d690db0f",
+              "name": "score",
+              "value": "={{ $json.score }}",
+              "type": "string"
+            },
+            {
+              "id": "ed846147-5c74-4768-a175-325bcda5b191",
+              "name": "acao",
+              "value": "={{ $json.acao }}",
+              "type": "string"
+            },
+            {
+              "id": "2b1238ed-c136-4272-890c-a4d1c2ef13f4",
+              "name": "prioridade",
+              "value": "={{ $json.prioridade }}",
+              "type": "string"
+            },
+            {
+              "id": "136d8c7b-7a6f-47d0-9495-bbeac67a24f7",
+              "name": "motivo",
+              "value": "={{ $json.motivo }}",
+              "type": "string"
+            },
+            {
+              "id": "cb2ff68a-1d62-475c-871c-e19f73ad6230",
+              "name": "campos_faltantes",
+              "value": "={{ $json.campos_faltantes }}",
+              "type": "string"
+            },
+            {
+              "id": "5c29855a-38cf-449f-953b-e93468a524d2",
+              "name": "inconsistencias",
+              "value": "={{ $json.inconsistencias }}",
+              "type": "string"
+            },
+            {
+              "id": "e2730163-1a31-4bc8-8799-18c5ebe4f75d",
+              "name": "observacoes",
+              "value": "={{ $json.observacoes }}",
+              "type": "string"
+            },
+            {
+              "id": "7be8ae63-d168-45d2-9522-5a8fff562ca4",
+              "name": "_raw.tipo_documento",
+              "value": "={{ $json._raw.tipo_documento }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2816,
+        0
+      ],
+      "id": "2e0e981b-3450-4143-9f93-afe022a72126",
+      "name": "Preparar Dados para Gravação Final"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.acao }}",
+                    "rightValue": "aceitar",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "a79621e0-19ac-47fd-904d-e2d646405115"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "aceitar"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "67500869-8230-42ca-ba50-704c202c87b2",
+                    "leftValue": "={{ $json.acao }}",
+                    "rightValue": "revisar",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "revisar"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "93645c9d-cd41-4c6f-a397-68a670ca65fb",
+                    "leftValue": "={{ $json.acao }}",
+                    "rightValue": "rejeitar",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "rejeitar"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        3056,
+        -16
+      ],
+      "id": "574f6065-b02c-403c-9ac2-0cbb3394d28a",
+      "name": "Decidir (Aceitar/Revisar/Rejeitar)"
+    },
+    {
+      "parameters": {
+        "tableId": "documentos",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "file_id",
+              "fieldValue": "={{ $('Separar Metadados do Arquivo').item.json.file_id }}"
+            },
+            {
+              "fieldId": "nome_arquivo",
+              "fieldValue": "={{ $('Separar Metadados do Arquivo').item.json.file_title }}"
+            },
+            {
+              "fieldId": "tipo_documento",
+              "fieldValue": "={{ $('Preparar Dados para Gravação Final').item.json._raw.tipo_documento }}"
+            },
+            {
+              "fieldId": "score",
+              "fieldValue": "={{ $('Preparar Dados para Gravação Final').item.json.score }}"
+            },
+            {
+              "fieldId": "acao",
+              "fieldValue": "={{ $('Preparar Dados para Gravação Final').item.json.acao }}"
+            },
+            {
+              "fieldId": "prioridade",
+              "fieldValue": "={{ $('Preparar Dados para Gravação Final').item.json.prioridade }}"
+            },
+            {
+              "fieldId": "motivo",
+              "fieldValue": "={{ $('Preparar Dados para Gravação Final').item.json.motivo }}"
+            },
+            {
+              "fieldId": "campos_faltantes",
+              "fieldValue": "={{ $('Preparar Dados para Gravação Final').item.json.campos_faltantes }}"
+            },
+            {
+              "fieldId": "inconsistencias",
+              "fieldValue": "={{ $('Preparar Dados para Gravação Final').item.json.inconsistencias }}"
+            },
+            {
+              "fieldId": "dados_extraidos",
+              "fieldValue": "={{ $('Preparar Dados para Gravação Final').item.json.observacoes }} "
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "Aprovado"
+            },
+            {
+              "fieldId": "link_arquivo",
+              "fieldValue": "={{ $('Separar Metadados do Arquivo').item.json.file_url }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3312,
+        -176
+      ],
+      "id": "8ad93d9d-261a-448f-b63f-1496ac9f6fcd",
+      "name": "Salvar Documento – Aceito",
+      "credentials": {
+        "supabaseApi": {
+          "id": "",
+          "name": "supabaseApi"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "documentos",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "file_id",
+              "fieldValue": "={{ $('Separar Metadados do Arquivo').item.json.file_id }}"
+            },
+            {
+              "fieldId": "nome_arquivo",
+              "fieldValue": "={{ $('Separar Metadados do Arquivo').item.json.file_title }}"
+            },
+            {
+              "fieldId": "tipo_documento",
+              "fieldValue": "={{ $('Preparar Dados para Gravação Final').item.json._raw.tipo_documento }}"
+            },
+            {
+              "fieldId": "score",
+              "fieldValue": "={{ $('Preparar Dados para Gravação Final').item.json.score }}"
+            },
+            {
+              "fieldId": "acao",
+              "fieldValue": "={{ $('Preparar Dados para Gravação Final').item.json.acao }}"
+            },
+            {
+              "fieldId": "prioridade",
+              "fieldValue": "={{ $json.prioridade }}"
+            },
+            {
+              "fieldId": "motivo",
+              "fieldValue": "={{ $json.motivo }}"
+            },
+            {
+              "fieldId": "campos_faltantes",
+              "fieldValue": "={{ $json.campos_faltantes }}"
+            },
+            {
+              "fieldId": "inconsistencias",
+              "fieldValue": "={{ $json.inconsistencias }}"
+            },
+            {
+              "fieldId": "dados_extraidos",
+              "fieldValue": "="
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "Revisar"
+            },
+            {
+              "fieldId": "link_arquivo",
+              "fieldValue": "={{ $('Separar Metadados do Arquivo').item.json.file_url }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3312,
+        0
+      ],
+      "id": "1414fc01-cb75-43aa-b5ff-6c10218dab9f",
+      "name": "Salvar Documento – Revisar",
+      "credentials": {
+        "supabaseApi": {
+          "id": "",
+          "name": "supabaseApi"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "documentos",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "file_id",
+              "fieldValue": "={{ $('Separar Metadados do Arquivo').item.json.file_id }}"
+            },
+            {
+              "fieldId": "nome_arquivo",
+              "fieldValue": "={{ $('Separar Metadados do Arquivo').item.json.file_title }}"
+            },
+            {
+              "fieldId": "tipo_documento",
+              "fieldValue": "={{ $('Preparar Dados para Gravação Final').item.json._raw.tipo_documento }}"
+            },
+            {
+              "fieldId": "score",
+              "fieldValue": "={{ $('Preparar Dados para Gravação Final').item.json.score }}"
+            },
+            {
+              "fieldId": "acao",
+              "fieldValue": "={{ $('Preparar Dados para Gravação Final').item.json.acao }}"
+            },
+            {
+              "fieldId": "prioridade",
+              "fieldValue": "={{ $('Preparar Dados para Gravação Final').item.json.prioridade }}"
+            },
+            {
+              "fieldId": "motivo",
+              "fieldValue": "={{ $('Preparar Dados para Gravação Final').item.json.motivo }}"
+            },
+            {
+              "fieldId": "campos_faltantes",
+              "fieldValue": "={{ $('Preparar Dados para Gravação Final').item.json.campos_faltantes }}"
+            },
+            {
+              "fieldId": "inconsistencias",
+              "fieldValue": "={{ $('Preparar Dados para Gravação Final').item.json.inconsistencias }}"
+            },
+            {
+              "fieldId": "dados_extraidos",
+              "fieldValue": "={{ $('Preparar Dados para Gravação Final').item.json.observacoes }} "
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "Rejeitar"
+            },
+            {
+              "fieldId": "link_arquivo",
+              "fieldValue": "={{ $('Separar Metadados do Arquivo').item.json.file_url }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3312,
+        176
+      ],
+      "id": "47f3aae9-a461-4718-aa91-9aec2cecaed2",
+      "name": "Salvar Documento – Rejeitado",
+      "credentials": {
+        "supabaseApi": {
+          "id": "",
+          "name": "supabaseApi"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "ETAPA 2 — Download e Preparação\n- Baixa o arquivo PDF do Google Drive\n- Envia o conteúdo para análise OCR\n",
+        "height": 528,
+        "width": 272,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1472,
+        -208
+      ],
+      "id": "745be060-0dcb-4de8-a869-ad0235fd65bc",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "ETAPA 3 — OCR com Gemini\n- Extrai texto e campos relevantes\n- Identifica tipo do documento\n- Normaliza dados extraídos\n\n",
+        "height": 528,
+        "width": 480,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        -208
+      ],
+      "id": "a67f9c1e-3910-4e04-a528-cf0581a51f4e",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "ETAPA 4 — Auditoria IA\n- Busca critérios oficiais no Supabase\n- Agente verifica OCR + critérios\n- Classifica cada requisito\n- Calcula score e ação final\n- Normaliza saída do Agente\n",
+        "height": 528,
+        "width": 704,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2256,
+        -208
+      ],
+      "id": "0d51de6a-0162-4c3f-871b-75fd96cf1800",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "ETAPA 5 — Decisão\n- Switch direciona para:\n  • Aceitar (≥ 90)\n  • Revisar (70–89)\n  • Rejeitar (< 70)\n",
+        "height": 528,
+        "width": 256,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2976,
+        -208
+      ],
+      "id": "80e9a3b9-2a18-4d82-a52b-d102619b665d",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "ETAPA 6 — Salvando Resultado\n- Salva o documento com status apropriado\n- Registra dados completos:\n  • Campos faltantes\n  • Inconsistências\n  • Score final\n  • Prioridade\n- Mover Arquivo",
+        "height": 784,
+        "width": 656,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3248,
+        -400
+      ],
+      "id": "4711218c-5011-4ce1-a8db-8427806ae6b2",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "sendTo": "contato@exemplo.com",
+        "subject": "=Documento Aprovado {{ $('Separar Metadados do Arquivo').item.json.file_title }}",
+        "message": "=<h2>📄 Documento Aprovado</h2>\n<p>Olá,</p>\n\n<p>O documento <strong>{{ $('Separar Metadados do Arquivo').item.json.file_title }}</strong> foi <strong>APROVADO automaticamente</strong>.</p>\n\n<p><strong>Tipo:</strong> {{ $('Preparar Dados para Gravação Final').item.json._raw.tipo_documento }}<br>\n<strong>Score:</strong> {{ $('Preparar Dados para Gravação Final').item.json.score }}%</p>\n\n<p>Nenhuma ação adicional é necessária.</p>\n\n<p>Atenciosamente,<br>Sistema Automatizado</p>\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        3504,
+        -176
+      ],
+      "id": "5a91b6bf-1a6c-4b39-8497-4862c0febbf8",
+      "name": "ENVIAR EMAIL APROVADO",
+      "webhookId": "39539400-6026-4c1c-8c44-f84850e49be4",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "contato@exemplo.com",
+        "subject": "=Documento Reprovado {{ $('Separar Metadados do Arquivo').item.json.file_title }}",
+        "message": "= <h2>❌ Documento Reprovado</h2>\n<p>Olá,</p>\n\n<p>O documento <strong>{{ $('Separar Metadados do Arquivo').item.json.file_title }}</strong> foi <strong>REPROVADO</strong>.</p>\n\n<p><strong>Motivo:</strong> {{ $('Preparar Dados para Gravação Final').item.json.motivo }}</p>\n\n<p><strong>Campos faltantes:</strong><br>\n{{ $('Preparar Dados para Gravação Final').item.json.campos_faltantes }}</p>\n\n<p>Por favor, envie uma nova versão corrigida.</p>\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        3504,
+        176
+      ],
+      "id": "e42e0d21-7187-4ba4-944a-623cff5b3888",
+      "name": "ENVIAR EMAIL RECUSADO",
+      "webhookId": "15a3992d-497b-49b0-9b25-8d79b0baaa8b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "contato@exemplo.com",
+        "subject": "=Documento Requer Revisão  {{ $('Separar Metadados do Arquivo').item.json.file_title }}",
+        "message": "= <h2>📄 Revisão Manual Necessária</h2>\n<p>Olá SST,</p>\n\n<p>O documento <strong>{{ $('Separar Metadados do Arquivo').item.json.file_title }}</strong> necessita de <strong>revisão humana</strong>.</p>\n\n<p><strong>Tipo:</strong> {{ $('Preparar Dados para Gravação Final').item.json._raw.tipo_documento }}<br>\n<strong>Score Inicial:</strong> {{ $('Preparar Dados para Gravação Final').item.json.score }}%</p>\n\n<p>Aguarda análise da equipe.</p>\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        3504,
+        0
+      ],
+      "id": "6c8eff25-c4c7-4acb-b58e-3aaf69db16a3",
+      "name": "ENVIAR EMAIL REVISÃO MANUAL",
+      "webhookId": "c9192ae2-c725-4a38-9a44-c48ed5be9807",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Separar Metadados do Arquivo').item.json.file_id }}",
+          "mode": "id"
+        },
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "SEU_ID",
+          "mode": "list",
+          "cachedResultName": "Documentos Aprovados"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        3712,
+        -176
+      ],
+      "id": "54244502-0fa0-4eba-9f51-da84f0980e8f",
+      "name": "Move Aprovados",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "",
+          "name": "Google Drive"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        3712,
+        0
+      ],
+      "id": "aec66067-a7eb-4d63-8e73-bb730a4066a2",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        3712,
+        176
+      ],
+      "id": "8ab44150-bee4-4305-ae16-bc8f5badf4d4",
+      "name": "No Operation, do nothing1"
+    }
+  ],
+  "connections": {
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "\"Normalizar Resultado da Auditoria",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_criterios": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aguardar Novo Documento": {
+      "main": [
+        [
+          {
+            "node": "Separar Metadados do Arquivo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separar Metadados do Arquivo": {
+      "main": [
+        [
+          {
+            "node": "Log – Entrada do Documento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log – Entrada do Documento": {
+      "main": [
+        [
+          {
+            "node": "Baixar Arquivo do Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Baixar Arquivo do Drive": {
+      "main": [
+        [
+          {
+            "node": "Executar OCR e Extrair Dados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Executar OCR e Extrair Dados": {
+      "main": [
+        [
+          {
+            "node": "Normalizar Dados do OCR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar Dados do OCR": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "\"Normalizar Resultado da Auditoria": {
+      "main": [
+        [
+          {
+            "node": "Preparar Dados para Gravação Final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Dados para Gravação Final": {
+      "main": [
+        [
+          {
+            "node": "Decidir (Aceitar/Revisar/Rejeitar)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decidir (Aceitar/Revisar/Rejeitar)": {
+      "main": [
+        [
+          {
+            "node": "Salvar Documento – Aceito",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Salvar Documento – Revisar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Salvar Documento – Rejeitado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Salvar Documento – Aceito": {
+      "main": [
+        [
+          {
+            "node": "ENVIAR EMAIL APROVADO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Salvar Documento – Revisar": {
+      "main": [
+        [
+          {
+            "node": "ENVIAR EMAIL REVISÃO MANUAL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Salvar Documento – Rejeitado": {
+      "main": [
+        [
+          {
+            "node": "ENVIAR EMAIL RECUSADO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ENVIAR EMAIL APROVADO": {
+      "main": [
+        [
+          {
+            "node": "Move Aprovados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ENVIAR EMAIL RECUSADO": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ENVIAR EMAIL REVISÃO MANUAL": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "name": "Auditoria de documentos com OCR e IA"
+}

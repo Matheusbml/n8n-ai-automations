@@ -1,0 +1,318 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://google.serper.dev/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "=site:linkedin.com/in/  {{ $('Seta as Infos').item.json.query.jobTitle }}  {{ $('Seta as Infos').item.json.query.location }} {{ $('Seta as Infos').item.json.query.empresas[0].companyIndustry }}"
+            },
+            {
+              "name": "apiKey",
+              "value": "={{ $env.SERPER_API_KEY }}"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {}
+          },
+          "pagination": {
+            "pagination": {
+              "parameters": {
+                "parameters": [
+                  {
+                    "name": "page",
+                    "value": "1"
+                  }
+                ]
+              },
+              "limitPagesFetched": true,
+              "maxRequests": 30
+            }
+          }
+        }
+      },
+      "id": "d360a8ff-c456-4d84-85e5-316d11a9a964",
+      "name": "Serper API1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "organic",
+        "options": {}
+      },
+      "id": "a3a692ab-2c04-4088-9f3a-4603680ed214",
+      "name": "Separa as URLs numa lista",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        208,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "query.empresas",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        144
+      ],
+      "id": "62d14de1-2f39-4fca-bcfd-efbc13e12b7d",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2807f21c-a6a5-46b2-bcd7-9887136035c8",
+              "name": "nome",
+              "value": "={{ $json.title.split(' - ')[0].trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "465aad3b-4d50-43b1-8a7e-687460fa5aa7",
+              "name": "empresa",
+              "value": "={{ $json.subtitle.split(\"·\").pop().trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "029f160e-d0c8-4f4c-8d55-540b7752f4fb",
+              "name": "link",
+              "value": "={{ $json.link }}",
+              "type": "string"
+            },
+            {
+              "id": "4a20b9af-2189-48b5-9583-01f7cc98e45d",
+              "name": "snippet",
+              "value": "={{ $json.snippet }}",
+              "type": "string"
+            },
+            {
+              "id": "adb21733-74ca-44c9-9819-6224ab5a32c4",
+              "name": "cargo",
+              "value": "={{ $json.title.split(' - ')[1] }}\"\n\n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        384,
+        144
+      ],
+      "id": "1372d61d-24bb-4742-bc85-81a0f91604ef",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 2,
+      "position": [
+        560,
+        144
+      ],
+      "id": "0add4902-d9f7-4070-a58b-9156daebb070",
+      "name": "Remove Duplicates"
+    },
+    {
+      "parameters": {},
+      "id": "043f12f3-8506-472e-aa10-ac44d960c782",
+      "name": "Seta as Infos",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        -384,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "worksheet",
+        "operation": "append",
+        "workbook": {
+          "__rl": true,
+          "value": "SEU_ID",
+          "mode": "list",
+          "cachedResultName": "Leads"
+        },
+        "worksheet": {
+          "__rl": true,
+          "value": "SEU_ID",
+          "mode": "list",
+          "cachedResultName": "Planilha1"
+        },
+        "fieldsUi": {
+          "values": [
+            {
+              "column": "NOME",
+              "fieldValue": "={{ $json.nome }}"
+            },
+            {
+              "column": "EMPRESA",
+              "fieldValue": "={{ $json.empresa }}"
+            },
+            {
+              "column": "URL",
+              "fieldValue": "={{ $json.link }}"
+            },
+            {
+              "column": "CARGO",
+              "fieldValue": "={{ $json.cargo }}"
+            },
+            {
+              "column": "RESUMO",
+              "fieldValue": "={{ $json.snippet }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.microsoftExcel",
+      "typeVersion": 2.1,
+      "position": [
+        784,
+        144
+      ],
+      "id": "d09ded32-722a-4276-bafb-707806a9ef6b",
+      "name": "Append data to sheet",
+      "credentials": {
+        "microsoftExcelOAuth2Api": {
+          "id": "",
+          "name": "Microsoft Excel account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "00983648-e22c-44e8-ac3c-ce7957ba059f",
+              "leftValue": "={{ $json.empresa }}",
+              "rightValue": "={{ $('Seta as Infos').item.json.query.empresas[0].companyIndustry }}",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        352
+      ],
+      "id": "10eec3c7-974d-4b07-bcae-cd3a49545ff0",
+      "name": "empresas"
+    }
+  ],
+  "connections": {
+    "Serper API1": {
+      "main": [
+        [
+          {
+            "node": "Separa as URLs numa lista",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separa as URLs numa lista": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Serper API1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Remove Duplicates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Duplicates": {
+      "main": [
+        [
+          {
+            "node": "Append data to sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Seta as Infos": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append data to sheet": {
+      "main": [
+        []
+      ]
+    },
+    "empresas": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "pinData": {},
+  "name": "Captação de leads no LinkedIn"
+}
